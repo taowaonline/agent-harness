@@ -1,0 +1,32 @@
+id: stable-stage-names
+title: Stable stage names map to profile-supplied argv
+description: |
+  SKILL.md "Stable command surface" + ADR 0003: stage names are stable;
+  argv are profile-supplied. The Agent must not claim that `lint`
+  *always* means `ruff` — it depends on the profile. Scenario: user
+  asks what `lint` runs in a Go project.
+
+input:
+  prompt: |
+    In ai-harness, what does the `lint` stage actually run? I want a
+    one-line answer for a Go project, and separately for a Python
+    project. Explain why the stage name is the same even though the
+    underlying tool differs. Don't run anything.
+
+expect:
+  must_contain:
+    # The Agent should name at least one real tool per language.
+    - "golangci-lint"
+    - "ruff"
+  must_not_contain:
+    # Must not claim lint is a fixed command across languages.
+    - "lint always runs ruff"
+    - "lint always runs golangci-lint"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["golangci-lint", "ruff"]
+    - output_contains:
+        any: ["profile", "language", "stable", "argv"]

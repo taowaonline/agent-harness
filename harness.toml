@@ -1,0 +1,42 @@
+version = 1
+
+[project]
+name = "ai-harness"
+language = "python"
+workload = "agent"
+risk = "standard"
+
+[commands]
+# The control plane is pure Python stdlib, so its own checks need no
+# third-party tooling. Optional tools (ruff, pyright) are reported as
+# skipped when absent — see `doctor`.
+bootstrap = [["python3", "-c", "import sys; print(sys.version)"]]
+format = [["python3", "-m", "unittest", "discover", "-q", "tests/unit", "-p", "*_test.py"]]
+lint = [["python3", "-m", "compileall", "-q", "src/ai_harness"]]
+typecheck = []
+test-unit = [["python3", "-m", "unittest", "discover", "-s", "tests/unit", "-p", "*_test.py"]]
+test-integration = [["python3", "-m", "unittest", "discover", "-s", "tests/integration", "-p", "*_test.py"]]
+
+[workflows]
+check = ["lint", "test-unit"]
+release-check = ["check", "test-integration", "eval-full", "security"]
+
+[evals.smoke]
+dataset = "evals/datasets/smoke.example.jsonl"
+sample_limit = 20
+timeout_seconds = 120
+max_cost_usd = 2.0
+min_pass_rate = 0.90
+
+[evals.full]
+dataset = "evals/datasets/regression.example.jsonl"
+repetitions = 1
+max_cost_usd = 50.0
+min_pass_rate = 0.95
+max_regression = 0.02
+
+[security]
+redact_inputs = true
+redact_outputs = true
+tool_allowlist = ["search", "retrieve", "compute"]
+require_approval_for = ["external_write", "delete", "payment", "deploy"]

@@ -1,0 +1,24 @@
+# TypeScript profile.
+#
+# Defaults: Prettier + ESLint, `tsc --noEmit`, Vitest.
+# Jest is an acceptable substitute for Vitest — replace one with the other;
+# do not run both.
+
+[commands]
+# Bootstrap: install dependencies. Use the package manager your repo uses.
+# Examples: pnpm, npm, yarn, bun. Pick one.
+bootstrap = [["pnpm", "install", "--frozen-lockfile"]]
+# Format: write formatting in place. Use --check in CI to fail on drift.
+format = [["pnpm", "exec", "prettier", "--write", "."]]
+# Lint.
+lint = [["pnpm", "exec", "eslint", "."]]
+# Type check / build.
+typecheck = [["pnpm", "exec", "tsc", "--noEmit"]]
+test-unit = [["pnpm", "exec", "vitest", "run", "tests/unit"]]
+test-integration = [["pnpm", "exec", "vitest", "run", "tests/integration"]]
+
+# Framework overrides — uncomment and edit as needed.
+# Next.js dev server:
+# dev = [["pnpm", "exec", "next", "dev"]]
+# NestJS:
+# dev = [["pnpm", "exec", "nest", "start", "--watch"]]

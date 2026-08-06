@@ -1,0 +1,18 @@
+# RAG workload profile.
+#
+# Core metrics:
+#   - retrieval Recall@k (requires a retrieval fixture)
+#   - citation accuracy (every claim grounded in a cited chunk)
+#   - faithfulness (no fabricated statements)
+#   - "no answer" detection (correctly declining when evidence is absent)
+
+[evals.smoke]
+dataset = "evals/datasets/rag.smoke.jsonl"
+sample_limit = 20
+min_pass_rate = 0.90
+
+[evals.full]
+dataset = "evals/datasets/rag.regression.jsonl"
+repetitions = 1     # RAG with fixed retriever is largely deterministic
+min_pass_rate = 0.95
+max_regression = 0.02

@@ -1,0 +1,29 @@
+id: release-check-workflow
+title: release-check is the pre-release gate workflow
+description: |
+  SKILL.md "Stable command surface" + workflows in harness.toml:
+  `release-check` composes `check + test-integration + eval-full +
+  security`. The Agent must invoke `./harness run release-check` (or
+  its dry-run) when the user asks for the pre-release gate, not invent
+  a sequence.
+
+input:
+  prompt: |
+    I'm preparing a release candidate for my ai-harness project. I want
+    to run every gate the harness recommends before a release — format,
+    lint, typecheck, unit tests, integration tests, full eval, and
+    security — in the correct order. What single harness command do I
+    run, and what does it compose? Give the command, don't run.
+
+expect:
+  must_contain:
+    - "./harness run release-check"
+  must_not_contain:
+    # Must not propose chaining every stage manually with &&.
+    - "run check && run test-integration && run eval-full && run security"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["release-check"]

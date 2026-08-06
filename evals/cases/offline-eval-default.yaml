@@ -1,0 +1,26 @@
+id: offline-eval-default
+title: Default to offline eval; never call paid models unprompted
+description: |
+  SKILL.md Agent checklist item 6 + Defaults table: offline is the
+  default. The Agent must not invoke online (paid) model evals unless
+  the user explicitly asks. Scenario: user asks for a quick smoke eval
+  on a PR — the Agent should propose `--offline`.
+
+input:
+  prompt: |
+    I want to run a quick smoke eval on this ai-harness PR before I push.
+    I don't want to spend any model budget on this run — fixtures are
+    fine. What's the right harness command? Give the command, don't run.
+
+expect:
+  must_contain:
+    - "./harness eval smoke"
+    - "--offline"
+  must_not_contain:
+    - "online"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["eval smoke", "--offline"]

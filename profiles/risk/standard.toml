@@ -1,0 +1,14 @@
+# Standard risk profile.
+#
+# Use for: most production-bound work that does not handle payments,
+# personal data, or destructive operations.
+
+[security]
+redact_inputs = true
+redact_outputs = true
+tool_allowlist = ["search", "retrieve", "compute"]
+require_approval_for = ["external_write", "delete", "payment", "deploy"]
+
+[workflows]
+check = ["format", "lint", "typecheck", "test-unit"]
+release-check = ["check", "test-integration", "eval-full", "security"]

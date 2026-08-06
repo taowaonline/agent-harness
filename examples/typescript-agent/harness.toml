@@ -1,0 +1,39 @@
+# Example: TypeScript tool-using agent service.
+
+version = 1
+
+[project]
+name = "typescript-agent-demo"
+language = "typescript"
+workload = "agent"
+risk = "standard"
+
+[commands]
+bootstrap = [["pnpm", "install", "--frozen-lockfile"]]
+format = [["pnpm", "exec", "prettier", "--write", "."]]
+lint = [["pnpm", "exec", "eslint", "."]]
+typecheck = [["pnpm", "exec", "tsc", "--noEmit"]]
+test-unit = [["pnpm", "exec", "vitest", "run", "tests/unit"]]
+test-integration = [["pnpm", "exec", "vitest", "run", "tests/integration"]]
+
+[workflows]
+check = ["format", "lint", "typecheck", "test-unit"]
+release-check = ["check", "test-integration", "eval-full", "security"]
+
+[evals.smoke]
+dataset = "../../evals/datasets/smoke.example.jsonl"
+sample_limit = 15
+min_pass_rate = 0.90
+
+[evals.full]
+dataset = "../../evals/datasets/regression.example.jsonl"
+repetitions = 3
+min_pass_rate = 0.92
+max_regression = 0.02
+
+[security]
+# Agents always require tight tool control — write actions are gated.
+redact_inputs = true
+redact_outputs = true
+tool_allowlist = ["search", "retrieve", "compute"]
+require_approval_for = ["external_write", "delete", "payment", "deploy"]

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-harness.local/harness.schema.json",
+  "title": "Harness configuration",
+  "type": "object",
+  "required": ["version", "project"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "integer",
+      "description": "Major config version. Unknown majors are rejected.",
+      "enum": [1]
+    },
+    "project": {
+      "type": "object",
+      "required": ["name", "language"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "language": {
+          "type": "string",
+          "enum": ["python", "typescript", "go", "rust", "jvm", "dotnet", "other"]
+        },
+        "workload": {
+          "type": "string",
+          "enum": ["chat", "rag", "agent", "extraction", "code-agent", "other"]
+        },
+        "risk": {
+          "type": "string",
+          "enum": ["prototype", "standard", "high-risk"]
+        }
+      }
+    },
+    "commands": {
+      "type": "object",
+      "description": "Map of stable stage name to one or more argv arrays.",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1
+        },
+        "minItems": 1
+      }
+    },
+    "workflows": {
+      "type": "object",
+      "description": "Map of workflow name to an ordered list of stage or workflow names.",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "evals": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "smoke": {"$ref": "#/$defs/evalConfig"},
+        "full": {"$ref": "#/$defs/evalConfig"}
+      }
+    },
+    "security": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "redact_inputs": {"type": "boolean"},
+        "redact_outputs": {"type": "boolean"},
+        "tool_allowlist": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "require_approval_for": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["external_write", "delete", "payment", "deploy", "network_egress", "privileged"]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "evalConfig": {
+      "type": "object",
+      "required": ["dataset"],
+      "additionalProperties": false,
+      "properties": {
+        "dataset": {"type": "string"},
+        "sample_limit": {"type": "integer", "minimum": 1},
+        "timeout_seconds": {"type": "integer", "minimum": 1},
+        "max_cost_usd": {"type": "number", "minimum": 0},
+        "min_pass_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "repetitions": {"type": "integer", "minimum": 1},
+        "max_regression": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    }
+  }
+}

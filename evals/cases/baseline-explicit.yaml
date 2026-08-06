@@ -1,0 +1,43 @@
+id: baseline-explicit
+title: Baseline updates are an explicit manual operation
+description: |
+  SKILL.md "Do not" rule + ADR 0006: never auto-overwrite a baseline
+  inside an eval run. The Agent must explain that baselines are
+  promoted deliberately via a copy + PR, not via an in-harness
+  command. We do NOT forbid the literal token "auto-promote" in the
+  Agent's prose — the Agent may legitimately say "there is no
+  auto-promote command" while teaching. We forbid the Agent from
+  *directing the user* to invoke a fictional promote flag.
+
+input:
+  prompt: |
+    I just ran `./harness eval full --offline` and it generated a fresh
+    report under evals/reports/. I want this to become the new baseline.
+    Should I just `cp` it over `evals/baselines/latest.json` myself, or
+    is there an in-harness command that auto-promotes the latest report
+    to baseline after a successful eval? Explain the intended workflow.
+
+expect:
+  must_contain:
+    - "baseline"
+  must_not_contain:
+    # The wrong answer is "run `./harness eval full --update-baseline`"
+    # or "run `./harness baseline promote`" — i.e., directing the user
+    # to invoke a fictional promote command. The Agent saying "there is
+    # no baseline promote command" while teaching is correct and
+    # explicitly allowed, so we forbid the *imperative* form only.
+    - "Run `./harness baseline promote"
+    - "run `./harness baseline promote"
+    - "./harness baseline promote`"
+    - "Run ./harness baseline promote"
+    - "--update-baseline"
+    - "--promote-baseline"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["baseline"]
+    - output_contains:
+        any: ["cp", "copy", "PR", "manual", "deliberate", "explicit", "reviewable"]
+

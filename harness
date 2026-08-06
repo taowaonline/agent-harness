@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+"""Harness executable entry point.
+
+Resolves the source tree so the user never needs to remember a Python
+module path or set PYTHONPATH. Resolution order:
+
+  1. `<this script's dir>/src`           — running from the source repo
+  2. `$HARNESS_HOME/src`                 — explicit override (set by user
+                                            or by the global wrapper)
+  3. `<known install path>/src`          — the canonical install location
+  4. bare `import ai_harness`            — installed via pip / pipx
+"""
+
+import os
+import sys
+
+
+# The canonical install location. Edit if you relocate the source repo,
+# or set HARNESS_HOME in the environment.
+_CANONICAL_HOME = "/Users/tommacmini4/Documents/code/harness"
+
+
+def _bootstrap() -> int:
+    here = os.path.dirname(os.path.abspath(__file__))
+
+    candidates = [
+        os.path.join(here, "src"),
+        os.environ.get("HARNESS_HOME", ""),
+        _CANONICAL_HOME,
+    ]
+    for c in candidates:
+        if not c:
+            continue
+        src = os.path.join(c, "src") if not c.endswith("/src") else c
+        if os.path.isdir(src) and src not in sys.path:
+            sys.path.insert(0, src)
+            break
+
+    try:
+        from ai_harness.cli import main
+    except ImportError as e:
+        sys.stderr.write(
+            f"harness: cannot find ai_harness package ({e}).\n"
+            f"  Tried: {candidates}\n"
+            f"  Set HARNESS_HOME to the source repo, or "
+            f"pip install the package.\n"
+        )
+        return 4  # internal error
+
+    return main()
+
+
+if __name__ == "__main__":
+    sys.exit(_bootstrap())

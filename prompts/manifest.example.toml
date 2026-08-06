@@ -1,0 +1,49 @@
+# Example prompt manifest. Each prompt is a versioned artifact.
+
+# Convention: bump the version on any behavioral change. Versions are
+# SemVer-ish: major for breaking input/output changes, minor for prompt
+# body changes, patch for safety or wording fixes.
+
+[[prompts]]
+id = "support-answer"
+version = "1.2.0"
+template = "templates/support-answer.md"
+input_schema = "schemas/support-input.json"
+output_schema = "schemas/support-output.json"
+owner = "team-name"
+model = { provider = "anthropic", name = "claude-opus-4-6", snapshot = "2026-01-01", temperature = 0.2, max_output_tokens = 1024, timeout_seconds = 30 }
+
+[[prompts]]
+id = "rag-grounded-answer"
+version = "0.4.1"
+template = "templates/rag-grounded-answer.md"
+input_schema = "schemas/rag-input.json"
+output_schema = "schemas/rag-output.json"
+owner = "team-name"
+model = { provider = "anthropic", name = "claude-sonnet-4-6", snapshot = "2026-01-01", temperature = 0.0, max_output_tokens = 2048, timeout_seconds = 30 }
+
+# Tools referenced by an agent prompt must declare:
+#   - input_schema
+#   - permission level (read-only, write, privileged)
+#   - timeout, retry, idempotency
+#   - audit fields
+
+[[tools]]
+id = "search_kb"
+version = "1.0.0"
+input_schema = "schemas/search-input.json"
+permission = "read-only"
+timeout_seconds = 5
+retries = 1
+idempotent = true
+audited = true
+
+[[tools]]
+id = "refund_order"
+version = "1.0.0"
+input_schema = "schemas/refund-input.json"
+permission = "write"        # gated by require_approval_for = ["payment"]
+timeout_seconds = 10
+retries = 0                 # not idempotent
+idempotent = false
+audited = true

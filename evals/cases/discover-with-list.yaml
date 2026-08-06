@@ -1,0 +1,24 @@
+id: discover-with-list
+title: Discover commands via ./harness list, not by guessing
+description: |
+  SKILL.md "Do not" rule: do not guess command names. Stage names are
+  stable but argv are profile-supplied. The Agent should use
+  `./harness list` to discover what's actually configured, not invent
+  commands or assume defaults.
+
+input:
+  prompt: |
+    This ai-harness project has its own harness.toml. I want to know
+    exactly which stages, workflows, and evals are configured in this
+    specific repo — not the generic docs. Which single harness command
+    shows me that, with config sources? Tell me the command, don't run.
+
+expect:
+  must_contain:
+    - "./harness list"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["./harness list"]

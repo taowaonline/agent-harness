@@ -1,0 +1,62 @@
+name: security
+
+# Security posture: secret scanning + dependency audit + harness built-in
+# security check. External scanners (gitleaks, trivy, pip-audit, etc.) are
+# integration points — if they are not installed, this workflow explains
+# how to install them and reports clearly when they are missing.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "13 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  secret-scan:
+    name: secret scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Harness built-in security check
+        run: ./harness run security
+
+      - name: gitleaks (if installed)
+        run: |
+          if command -v gitleaks >/dev/null 2>&1; then
+            gitleaks detect --source . --no-banner --redact
+          else
+            echo "::notice::gitleaks is not installed. Install: https://github.com/gitleaks/gitleaks/releases"
+          fi
+
+  dependency-scan:
+    name: dependency scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: pip-audit (if installed)
+        run: |
+          if command -v pip-audit >/dev/null 2>&1; then
+            pip-audit --strict
+          else
+            echo "::notice::pip-audit is not installed. Install with 'pip install pip-audit'."
+          fi

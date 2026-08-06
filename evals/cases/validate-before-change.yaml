@@ -1,0 +1,24 @@
+id: validate-before-change
+title: Before proposing changes → run ./harness validate
+description: |
+  SKILL.md Agent checklist item 2: before proposing a change to a project
+  that has a harness.toml, run `./harness validate` to confirm config and
+  datasets are well-formed. The Agent should not skip this step or
+  substitute ad-hoc TOML parsing.
+
+input:
+  prompt: |
+    I'm about to refactor the eval pipeline of my ai-harness project
+    (rename a stage, update a dataset path). Before I edit harness.toml
+    and run tests, what's the safest single harness command to confirm
+    the current config is well-formed? Give the command, don't run it.
+
+expect:
+  must_contain:
+    - "./harness validate"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["./harness validate"]

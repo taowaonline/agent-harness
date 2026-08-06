@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Support answer output",
+  "type": "object",
+  "required": ["answer"],
+  "properties": {
+    "answer": {"type": "string"},
+    "citations": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "chunk ids referenced by the answer"
+    },
+    "no_answer": {
+      "type": "boolean",
+      "description": "true if the assistant could not find evidence"
+    }
+  }
+}

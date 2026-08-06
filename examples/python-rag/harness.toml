@@ -1,0 +1,44 @@
+# Example: Python RAG service.
+#
+# Copy this file into a real Python+RAG project and adjust paths.
+
+version = 1
+
+[project]
+name = "python-rag-demo"
+language = "python"
+workload = "rag"
+risk = "standard"
+
+[commands]
+bootstrap = [["uv", "sync"]]
+format = [["uv", "run", "ruff", "format", "."]]
+lint = [["uv", "run", "ruff", "check", "."]]
+typecheck = [["uv", "run", "pyright"]]
+test-unit = [["uv", "run", "pytest", "tests/unit"]]
+test-integration = [["uv", "run", "pytest", "tests/integration"]]
+
+[workflows]
+check = ["format", "lint", "typecheck", "test-unit"]
+release-check = ["check", "test-integration", "eval-full", "security"]
+
+[evals.smoke]
+# Reference the parent repo's example dataset so this config validates
+# standalone. Replace with your own dataset in a real project.
+dataset = "../../evals/datasets/smoke.example.jsonl"
+sample_limit = 20
+min_pass_rate = 0.90
+max_cost_usd = 2.0
+
+[evals.full]
+dataset = "../../evals/datasets/regression.example.jsonl"
+repetitions = 1
+min_pass_rate = 0.95
+max_regression = 0.02
+max_cost_usd = 50.0
+
+[security]
+redact_inputs = true
+redact_outputs = true
+tool_allowlist = ["retrieve"]
+require_approval_for = ["external_write", "delete", "payment", "deploy"]

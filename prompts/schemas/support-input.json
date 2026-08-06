@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Support answer input",
+  "type": "object",
+  "required": ["product_name", "user_question", "retrieved_chunks"],
+  "properties": {
+    "product_name": {"type": "string"},
+    "user_question": {"type": "string", "minLength": 1},
+    "retrieved_chunks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "text"],
+        "properties": {
+          "id": {"type": "string"},
+          "text": {"type": "string"}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+# Agent (tool-using) workload profile.
+#
+# Core metrics:
+#   - tool selection accuracy
+#   - argument correctness (type + value)
+#   - task success rate
+#   - step count (efficiency; high step count = cost + latency risk)
+#   - side-effect audit (no calls outside the allowlist)
+
+[evals.smoke]
+dataset = "evals/datasets/agent.smoke.jsonl"
+sample_limit = 15
+min_pass_rate = 0.90
+
+[evals.full]
+dataset = "evals/datasets/agent.regression.jsonl"
+repetitions = 3   # agent traces vary; report p50/p95 step counts
+min_pass_rate = 0.92
+max_regression = 0.02

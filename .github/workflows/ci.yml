@@ -1,0 +1,64 @@
+name: ci
+
+# PR-level CI. Runs on every push to a pull request and on every push to
+# main. Required checks produced by this workflow MUST always report a
+# terminal status (success or failure) — never Pending indefinitely — so
+# we avoid path filters that would skip the workflow entirely.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  harness:
+    name: harness checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate harness config
+        run: |
+          ./harness validate --strict
+
+      - name: Lint (compileall)
+        run: |
+          ./harness run lint
+
+      - name: Unit tests
+        run: |
+          ./harness run test-unit
+
+      - name: Integration tests
+        run: |
+          ./harness run test-integration
+
+      - name: Offline smoke eval
+        run: |
+          ./harness eval smoke --offline
+
+      - name: Security posture check
+        run: |
+          ./harness run security
+
+      - name: Upload eval reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-reports
+          path: evals/reports/
+          if-no-files-found: ignore
+          retention-days: 14

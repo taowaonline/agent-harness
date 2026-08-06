@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Harness generated artifacts. Baselines under evals/baselines/ ARE
+# checked in; reports and runtime artifacts are NOT.
+evals/reports/*
+!evals/reports/.gitkeep
+
+# skill-up workspaces (per-iteration eval artifacts). Re-runnable.
+harness-workspace/
+*-workspace/
+
+# Local secrets / env files. NEVER commit these.
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets.json
+credentials.json
+
+# OS
+Thumbs.db

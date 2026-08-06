@@ -1,0 +1,30 @@
+# High-risk profile.
+#
+# Use for: features touching payments, healthcare/financial data,
+# infrastructure-as-code, or irreversible operations.
+
+[security]
+redact_inputs = true
+redact_outputs = true
+# Minimal tool surface — extend explicitly, never via wildcard.
+tool_allowlist = ["retrieve"]
+# Every privileged action requires human approval.
+require_approval_for = [
+    "external_write",
+    "delete",
+    "payment",
+    "deploy",
+    "network_egress",
+    "privileged",
+]
+
+[workflows]
+# High-risk runs adversarial eval on every PR, not just at release.
+check = ["format", "lint", "typecheck", "test-unit"]
+release-check = [
+    "check",
+    "test-integration",
+    "eval-smoke",
+    "eval-full",
+    "security",
+]

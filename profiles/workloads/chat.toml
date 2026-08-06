@@ -1,0 +1,20 @@
+# Chat workload profile.
+#
+# Core metrics:
+#   - correctness (golden turn-level answers)
+#   - relevance (model-judge, sampled)
+#   - refusal appropriateness (over-refusal vs. under-refusal)
+#   - context retention across multi-turn conversations
+
+# These are *example* dataset references — copy or override in your
+# project's [evals] section.
+[evals.smoke]
+dataset = "evals/datasets/chat.smoke.jsonl"
+sample_limit = 30
+min_pass_rate = 0.90
+
+[evals.full]
+dataset = "evals/datasets/chat.regression.jsonl"
+repetitions = 3  # non-determinism is common in chat
+min_pass_rate = 0.92
+max_regression = 0.02

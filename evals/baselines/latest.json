@@ -1,0 +1,118 @@
+{
+  "cases": [
+    {
+      "case_id": "rag-101",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "rag-102",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "rag-103",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "rag-104",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "agent-101",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "agent-102",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "extract-101",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "chat-101",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "chat-102",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    },
+    {
+      "case_id": "perf-101",
+      "duration_ms": 0,
+      "grader": "",
+      "metrics": {},
+      "output_redacted": true,
+      "reason": "",
+      "status": "passed"
+    }
+  ],
+  "dataset": "evals/datasets/regression.example.jsonl",
+  "duration_ms": 0,
+  "git_sha": "9b3d25c",
+  "harness_version": "0.1.0",
+  "name": "full",
+  "started_at": "2026-08-02T09:33:58Z",
+  "status": "passed",
+  "summary": {
+    "errors": 0,
+    "failed": 0,
+    "p50_latency_ms": 0,
+    "p95_latency_ms": 0,
+    "pass_rate": 1.0,
+    "passed": 10,
+    "skipped": 0,
+    "total": 10
+  },
+  "thresholds": {
+    "max_cost_usd": 50.0,
+    "max_regression": 0.02,
+    "min_pass_rate": 0.95,
+    "sample_limit": null,
+    "timeout_seconds": null
+  }
+}

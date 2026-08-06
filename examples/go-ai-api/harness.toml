@@ -1,0 +1,38 @@
+# Example: Go AI API gateway.
+
+version = 1
+
+[project]
+name = "go-ai-api-demo"
+language = "go"
+workload = "other"
+risk = "standard"
+
+[commands]
+bootstrap = [["go", "mod", "download"]]
+format = [["gofmt", "-w", "."]]
+lint = [["golangci-lint", "run", "./..."]]
+typecheck = [["go", "vet", "./..."], ["go", "build", "./..."]]
+test-unit = [["go", "test", "-race", "./..."]]
+test-integration = [["go", "test", "-tags=integration", "./..."]]
+
+[workflows]
+check = ["format", "lint", "typecheck", "test-unit"]
+release-check = ["check", "test-integration", "eval-full", "security"]
+
+[evals.smoke]
+dataset = "../../evals/datasets/smoke.example.jsonl"
+sample_limit = 20
+min_pass_rate = 0.90
+
+[evals.full]
+dataset = "../../evals/datasets/regression.example.jsonl"
+repetitions = 1
+min_pass_rate = 0.95
+max_regression = 0.02
+
+[security]
+redact_inputs = true
+redact_outputs = true
+tool_allowlist = ["retrieve"]
+require_approval_for = ["external_write", "delete", "payment", "deploy"]

@@ -1,0 +1,46 @@
+schema_version: v1alpha1
+
+# Goal: verify the ai-harness Skill's "decision correctness".
+# We do NOT actually run subprocess builds here; we test whether the Agent
+# invokes the harness CLI (./harness) and uses the stable command surface
+# correctly:
+#   1) recommends doctor when toolchain is uncertain
+#   2) recommends validate before changes
+#   3) uses ./harness list to discover commands (not guess)
+#   4) uses --dry-run to preview
+#   5) reports skipped as skipped, never as passed
+#   6) defaults to offline eval
+#   7) enforces no-shell, argv-only when extending
+#   8) knows baseline updates are explicit
+
+environment:
+  type: none
+
+skills:
+  - source: local_path
+    path: .
+
+engine:
+  name: claude_code
+  # model: leave empty to use claude_code default
+
+cases:
+  files:
+    - evals/cases/doctor-first.yaml
+    - evals/cases/validate-before-change.yaml
+    - evals/cases/discover-with-list.yaml
+    - evals/cases/dry-run-preview.yaml
+    - evals/cases/skipped-not-passed.yaml
+    - evals/cases/offline-eval-default.yaml
+    - evals/cases/no-shell-argv-only.yaml
+    - evals/cases/baseline-explicit.yaml
+    - evals/cases/stable-stage-names.yaml
+    - evals/cases/release-check-workflow.yaml
+  defaults:
+    timeout_seconds: 180
+    max_turns: 5
+  # Decision-style cases are independent; safe to parallelize.
+  parallelism: 3
+
+report:
+  formats: [json, html]

@@ -1,0 +1,74 @@
+name: evals
+
+# Full evaluation workflow. Triggered manually, on schedule, or on release.
+# Online evals only run when the required secret is present; otherwise the
+# job runs in offline mode (still valuable for regression coverage).
+
+on:
+  workflow_dispatch:
+    inputs:
+      online:
+        description: "Run online evals (requires Evals secret)"
+        required: false
+        default: "false"
+  schedule:
+    # 09:00 UTC daily — off the :00 mark to spread load on shared APIs.
+    - cron: "7 9 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: evals-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  full-eval:
+    name: full eval
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # Never expose secrets on fork PRs. workflow_dispatch and schedule
+    # only ever run on the default branch, so this is belt-and-braces.
+    environment: evals
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate harness config
+        run: ./harness validate --strict
+
+      - name: Offline full eval (always)
+        run: ./harness eval full --offline
+
+      - name: Online full eval (only if secret present)
+        if: ${{ github.event.inputs.online == 'true' && secrets.EVALS_ENABLED == 'true' }}
+        env:
+          # Consume the secret so it is masked in logs. The actual provider
+          # implementation reads it from the environment — never check it in.
+          EVAL_API_KEY: ${{ secrets.EVAL_API_KEY }}
+        run: |
+          echo "Online eval provider is a project integration point."
+          echo "Configure ModelProvider in your project to consume EVAL_API_KEY."
+          # Replace with: ./harness eval full --json > evals/reports/online-$(date +%s).json
+
+      - name: Compare to baseline (if present)
+        run: |
+          if [ -f evals/baselines/latest.json ]; then
+            latest=$(ls -t evals/reports/full-*.json | head -1)
+            ./harness baseline compare evals/baselines/latest.json "$latest"
+          else
+            echo "No baseline at evals/baselines/latest.json — skipping comparison."
+          fi
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-reports-full
+          path: evals/reports/
+          if-no-files-found: ignore
+          retention-days: 30

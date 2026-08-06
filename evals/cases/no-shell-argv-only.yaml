@@ -1,0 +1,38 @@
+id: no-shell-argv-only
+title: Extending harness = argv arrays only, no shell=True
+description: |
+  SKILL.md "Do not" rule: never `shell=True` or string-concatenate
+  commands when extending the harness. Commands must be argv arrays.
+  Scenario: user asks how to add a custom `lint` stage that runs a
+  shell pipeline. The Agent must propose an argv array, not a shell
+  pipeline form. We do NOT forbid the literal token "shell=True" in
+  the Agent's prose — the Agent may legitimately say "do not use
+  shell=True" while teaching. We forbid the Agent from *proposing*
+  a TOML `[commands]` entry whose value is a shell-style string or
+  uses pipe characters inside an argv element.
+
+input:
+  prompt: |
+    I want to add a new `lint` stage to my harness.toml that today runs
+    as a shell pipeline: `find . -name '*.py' | xargs ruff check`. How
+    should I express that in the [commands] section? Sketch the TOML,
+    don't run anything.
+
+expect:
+  must_contain:
+    # Must propose the argv-array form, and name the tool.
+    - "[["
+    - "ruff"
+
+judge:
+  type: rule_based
+  success:
+    # The right answer is an argv-array TOML entry that names ruff.
+    - output_contains:
+        all: ["[[", "]]", "ruff"]
+    # The Agent should explicitly call out the no-shell / no-pipe rule
+    # rather than silently transliterating the pipeline.
+    - output_contains:
+        any: ["argv", "shell", "no shell", "subprocess", "execve", "pipe"]
+
+

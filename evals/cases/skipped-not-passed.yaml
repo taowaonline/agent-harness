@@ -1,0 +1,38 @@
+id: skipped-not-passed
+title: Report skipped as skipped, never as passed
+description: |
+  SKILL.md "Do not" rule: never treat `skipped` as `passed`. The Agent
+  must surface the skip reason. Scenario: a typecheck stage is configured
+  but its binary is absent. The Agent should report the stage as skipped
+  with the reason, not as a pass.
+
+input:
+  prompt: |
+    I ran `./harness run check` on my ai-harness project. The typecheck
+    stage shows status `skipped` with reason "executable unavailable for
+    optional stage". Did typecheck pass? How should I report this to my
+    team — as success or as something else? Explain briefly.
+
+expect:
+  must_contain:
+    - "skipped"
+  must_not_contain:
+    # Forbid only the imperative/affirmative wrong answer — the Agent
+    # telling the user the stage passed or that it's safe to report it
+    # as a pass. The Agent saying "do not say 'typecheck passed'" while
+    # teaching is correct and explicitly allowed.
+    - "Yes, typecheck passed"
+    - "typecheck succeeded"
+    - "you can report it as passed"
+    - "report it as passed"
+    - "report it as success"
+    - "it is safe to merge"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["skipped"]
+    - output_contains:
+        any: ["did not pass", "not pass", "didn't pass", "no", "Not", "did not run", "gap"]
+

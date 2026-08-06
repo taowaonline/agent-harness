@@ -1,0 +1,19 @@
+# Go profile.
+#
+# Defaults: gofmt, golangci-lint, `go vet`, `go build`, `go test`.
+
+[commands]
+# Bootstrap: download dependencies.
+bootstrap = [["go", "mod", "download"]]
+# Format: write formatting in place.
+format = [["gofmt", "-w", "."]]
+# Lint via golangci-lint. If unavailable, `go vet` is the floor.
+lint = [["golangci-lint", "run", "./..."]]
+# `go vet` is always available; keep it as a separate type-check stage.
+typecheck = [["go", "vet", "./..."], ["go", "build", "./..."]]
+test-unit = [["go", "test", "-race", "./..."]]
+test-integration = [["go", "test", "-tags=integration", "./..."]]
+
+# Framework overrides — uncomment as needed.
+# dev (standard library net/http or your framework):
+# dev = [["go", "run", "./cmd/server"]]

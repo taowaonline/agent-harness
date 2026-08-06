@@ -1,0 +1,18 @@
+# Rust profile.
+#
+# Defaults: rustfmt, Clippy, `cargo check`, `cargo test`.
+
+[commands]
+# Bootstrap: build dependencies.
+bootstrap = [["cargo", "fetch"]]
+# Format: write in place.
+format = [["cargo", "fmt"]]
+# Lint via Clippy with -D warnings (treat warnings as errors in CI).
+lint = [["cargo", "clippy", "--", "-D", "warnings"]]
+# Type check / build.
+typecheck = [["cargo", "check", "--all-targets"]]
+test-unit = [["cargo", "test", "--lib"]]
+test-integration = [["cargo", "test", "--test", "*"]]
+
+# Workspace note: for a multi-crate workspace, keep these argv the same —
+# they already operate on the whole workspace.

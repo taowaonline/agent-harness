@@ -1,0 +1,20 @@
+# .NET profile (C# / F#).
+#
+# Defaults: `dotnet format`, `dotnet build`, `dotnet test`.
+
+[commands]
+# Bootstrap: restore NuGet packages.
+bootstrap = [["dotnet", "restore"]]
+# Format: write formatting in place.
+format = [["dotnet", "format"]]
+# Lint: the .NET ecosystem does not have a single canonical linter —
+# `dotnet format --verify-no-changes` is the closest. Add analyzers in
+# the .csproj as needed.
+lint = [["dotnet", "format", "--verify-no-changes", "--severity", "warn"]]
+# Build / type check.
+typecheck = [["dotnet", "build", "--no-restore"]]
+test-unit = [["dotnet", "test", "--no-build", "--filter", "FullyQualifiedName~Unit"]]
+test-integration = [["dotnet", "test", "--no-build", "--filter", "FullyQualifiedName~Integration"]]
+
+# ASP.NET Core dev server:
+# dev = [["dotnet", "run", "--project", "src/Web"]]

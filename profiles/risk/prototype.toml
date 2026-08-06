@@ -1,0 +1,16 @@
+# Prototype risk profile.
+#
+# Use for: hackathons, internal demos, exploratory work that will not
+# touch production data or external users. Trade speed for safety.
+
+[security]
+redact_inputs = true
+redact_outputs = true
+tool_allowlist = ["search", "retrieve", "compute"]
+# Prototype can still write internally but never deploy or pay.
+require_approval_for = ["deploy", "payment", "delete"]
+
+[workflows]
+# Prototype skips full eval; smoke is enough.
+check = ["format", "lint", "test-unit"]
+release-check = ["check", "security"]

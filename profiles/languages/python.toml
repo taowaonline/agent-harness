@@ -1,0 +1,20 @@
+# Python profile — copy into your project's harness.toml [commands] section.
+#
+# Default toolchain: Ruff (format + lint), Pyright (types), Pytest (tests).
+# Replace any of these with your preferred equivalents (Black, isort, Mypy,
+# unittest, etc.) — the harness does not run them all simultaneously.
+
+[commands]
+# Bootstrap: install dependencies. `uv sync` is the default; if you use
+# plain pip / poetry / pdm, swap the argv accordingly.
+bootstrap = [["uv", "sync"]]
+# Format: write formatting changes in place.
+format = [["uv", "run", "ruff", "format", "."]]
+# Lint: check (do not auto-fix) — fail on violations.
+lint = [["uv", "run", "ruff", "check", "."]]
+# Type check: Pyright. Mypy is an acceptable substitute.
+typecheck = [["uv", "run", "pyright"]]
+# Unit tests.
+test-unit = [["uv", "run", "pytest", "tests/unit"]]
+# Integration tests.
+test-integration = [["uv", "run", "pytest", "tests/integration"]]

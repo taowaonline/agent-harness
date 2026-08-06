@@ -1,0 +1,27 @@
+id: doctor-first
+title: Toolchain uncertain → recommend ./harness doctor first
+description: |
+  SKILL.md Agent checklist item 1: when the project's toolchain looks
+  uncertain, the Agent should run `./harness doctor` before proposing
+  changes. Scenario: user just cloned a repo and is unsure the harness
+  toolchain is ready. The Agent should point to doctor, not jump to
+  running check or eval.
+
+input:
+  prompt: |
+    I just cloned an AI project that uses ai-harness (I can see ./harness
+    and harness.toml at the repo root). I'm on a fresh machine and have
+    no idea if my Python, Ruff, Pyright are set up correctly for this
+    project. Before I touch anything, what's the first harness command
+    I should run to get a quick health check? Just give me the plan, do
+    not execute anything.
+
+expect:
+  must_contain:
+    - "./harness doctor"
+
+judge:
+  type: rule_based
+  success:
+    - output_contains:
+        all: ["./harness doctor"]

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-harness"
+version = "0.1.0"
+description = "Vendor-neutral control plane for AI-assisted development and AI application lifecycle."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "Harness Contributors"}]
+# The control plane deliberately ships with no runtime third-party deps.
+dependencies = []
+
+[project.optional-dependencies]
+dev = []
+
+[project.scripts]
+harness = "ai_harness.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ai_harness = ["py.typed"]

@@ -1,0 +1,20 @@
+# JVM profile (Java / Kotlin / Scala).
+#
+# Defaults: Spotless (format) + Checkstyle (lint), Gradle build, JUnit tests.
+# Maven is an acceptable substitute — swap `gradle` for `mvn` and adjust
+# the goal names.
+
+[commands]
+# Bootstrap: build dependencies.
+bootstrap = [["./gradlew", "--quiet", "dependencies"]]
+# Format via Spotless.
+format = [["./gradlew", "--quiet", "spotlessApply"]]
+# Lint via Checkstyle (configurable in build.gradle).
+lint = [["./gradlew", "--quiet", "checkstyleMain"]]
+# Compile — this is the JVM's analogue of "type check".
+typecheck = [["./gradlew", "--quiet", "compileJava"]]
+test-unit = [["./gradlew", "--quiet", "test"]]
+test-integration = [["./gradlew", "--quiet", "integrationTest"]]
+
+# Spring Boot dev server:
+# dev = [["./gradlew", "--quiet", "bootRun"]]
