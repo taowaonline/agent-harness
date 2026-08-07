@@ -75,12 +75,28 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
     started = time.monotonic()
     stage = StageResult(name="security", kind="check")
     findings: list[str] = []
+    # Advisory findings are surfaced in metrics but do not flip the stage
+    # status to failed. Used for cases where the policy is intentionally
+    # minimal (e.g. a non-AI project with no Agent tools to allowlist).
+    advisory: list[str] = []
 
     # 1. Policy posture checks.
+    # AI workloads (chat/rag/agent/extraction/code-agent) expose Agent
+    # tools, so an empty allowlist is a real risk. Non-AI projects
+    # (workload = "other") have nothing to allowlist — empty is correct.
+    ai_workloads = {"chat", "rag", "agent", "extraction", "code-agent"}
     if not cfg.security.tool_allowlist:
-        findings.append(
-            "[policy] tool_allowlist is empty — Agent tools default to deny-all"
-        )
+        if cfg.project.workload in ai_workloads:
+            findings.append(
+                "[policy] tool_allowlist is empty for an AI workload — "
+                "Agent tools default to deny-all, which may be tighter "
+                "than intended"
+            )
+        else:
+            advisory.append(
+                "[policy] tool_allowlist is empty (acceptable for "
+                "non-AI workload 'other')"
+            )
     if "external_write" not in cfg.security.require_approval_for:
         findings.append(
             "[policy] 'external_write' is not in require_approval_for"
@@ -107,6 +123,8 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
 
     stage.metrics = {
         "findings_count": len(findings),
+        "advisory_count": len(advisory),
+        "advisory": advisory,
         "policy_checks": {
             "tool_allowlist_size": len(cfg.security.tool_allowlist),
             "require_approval_for": list(cfg.security.require_approval_for),

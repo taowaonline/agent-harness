@@ -74,20 +74,48 @@ class SecurityCheckTests(unittest.TestCase):
         os.chdir(self._cwd)
 
     def test_flags_weak_policy(self) -> None:
-        # Empty allowlist and no required approvals should produce findings.
+        # Empty allowlist (AI workload) + no required approvals → fail.
         sec = SecurityConfig(
             tool_allowlist=[],
             require_approval_for=[],
         )
-        cfg = _cfg(security=sec)
+        cfg = Config(
+            version=1,
+            project=ProjectInfo(name="t", language="python", workload="rag"),
+            commands={},
+            workflows={},
+            evals={},
+            security=sec,
+        )
         result = RunResult(command="security")
         stage = run_security_check(cfg, result)
         self.assertEqual(stage.status, STATUS_FAILED)
         self.assertGreaterEqual(stage.metrics["findings_count"], 3)
-        # Findings should mention each missing approval kind.
         joined = " ".join(result.errors)
         self.assertIn("external_write", joined)
         self.assertIn("delete", joined)
+
+    def test_non_ai_project_empty_allowlist_is_advisory(self) -> None:
+        # Non-AI workload (other) + empty allowlist → advisory, not failure.
+        sec = SecurityConfig(
+            tool_allowlist=[],
+            require_approval_for=["external_write", "delete"],
+        )
+        cfg = Config(
+            version=1,
+            project=ProjectInfo(name="t", language="other", workload="other"),
+            commands={},
+            workflows={},
+            evals={},
+            security=sec,
+        )
+        result = RunResult(command="security")
+        stage = run_security_check(cfg, result)
+        self.assertEqual(stage.status, STATUS_PASSED, result.errors)
+        # The empty-allowlist is surfaced as advisory, not as a finding.
+        self.assertEqual(stage.metrics["findings_count"], 0)
+        self.assertGreaterEqual(stage.metrics["advisory_count"], 1)
+        self.assertIn("tool_allowlist", stage.metrics["advisory"][0])
 
     def test_passes_with_strong_policy(self) -> None:
         sec = SecurityConfig(

@@ -118,9 +118,9 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Bootstrap a harness setup in the current directory.",
     )
     sp.add_argument("--language", default="python",
-                    choices=["python", "typescript", "go", "rust", "jvm", "dotnet"])
+                    choices=["python", "typescript", "go", "rust", "jvm", "dotnet", "other"])
     sp.add_argument("--workload", default="other",
-                    choices=["chat", "rag", "agent", "extraction", "other"])
+                    choices=["chat", "rag", "agent", "extraction", "code-agent", "other"])
     sp.add_argument("--risk", default="standard",
                     choices=["prototype", "standard", "high-risk"])
     sp.add_argument("--name", default="",
