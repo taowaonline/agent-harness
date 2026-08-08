@@ -19,10 +19,15 @@ _SECRET_PATTERNS: tuple[re.Pattern[str], ...] = (
     # `Authorization: Bearer <token>` form is fully redacted.
     re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._\-/+=]+"),
     # Generic key=value style: api_key=..., token=..., secret=...
+    # Value must look secret-shaped: either a quoted string of length >=8,
+    # OR an unquoted run of 20+ base64-ish chars. This avoids false
+    # positives on source code like `const token = auth.replace(...)`
+    # while still catching `api_key="sk_live_..."` and YAML/TOML leaks.
     re.compile(
         r"(?i)\b(api[_-]?key|secret|token|password|passwd|authorization|"
         r"auth[_-]?token|access[_-]?key|private[_-]?key|client[_-]?secret|"
-        r"refresh[_-]?token)\b\s*[:=]\s*[^\s,;'\"]+"
+        r"refresh[_-]?token)\b\s*[:=]\s*"
+        r"(?:\"[^\"]{8,}\"|'[^']{8,}'|[A-Za-z0-9+/=_-]{20,})"
     ),
     # AWS access key id
     re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
