@@ -62,7 +62,8 @@ class RunStageTests(unittest.TestCase):
             RunRequest(name="touch", dry_run=True),
             result,
         )
-        self.assertEqual(result.status, STATUS_PASSED)
+        # Dry-run never produces PASSED at the top — honest SKIPPED.
+        self.assertEqual(result.status, STATUS_SKIPPED)
         self.assertFalse(Path(marker).exists())
         if Path(marker).exists():
             Path(marker).unlink()
@@ -103,7 +104,8 @@ class RunStageTests(unittest.TestCase):
         run_target(cfg, RunRequest(name="typecheck"), result)
         # 'typecheck' is in the optional allowlist; missing binary => skipped.
         self.assertEqual(result.stages[0].status, STATUS_SKIPPED)
-        self.assertEqual(result.status, STATUS_PASSED)
+        # Top-level result honestly reports SKIPPED, not PASSED.
+        self.assertEqual(result.status, STATUS_SKIPPED)
 
     def test_required_stage_with_missing_executable_fails(self) -> None:
         cfg = _cfg(

@@ -27,6 +27,7 @@ from .evals import DatasetError, compare_reports, load_dataset, run_eval
 from .policy import (
     EXIT_INTERNAL,
     EXIT_POLICY_BLOCKED,
+    EXIT_SKIPPED,
     EXIT_STAGE_FAILED,
     EXIT_SUCCESS,
     EXIT_USAGE,
@@ -93,6 +94,13 @@ def _build_parser() -> argparse.ArgumentParser:
     sp.add_argument("target")
     sp.add_argument("--config", default=DEFAULT_CONFIG_PATH)
     sp.add_argument("--dry-run", action="store_true")
+    sp.add_argument(
+        "--allow-skipped",
+        action="store_true",
+        help="Exit 0 even if the result contains skipped stages. "
+             "Default is exit 10 so partial skips are not silently "
+             "treated as success.",
+    )
     sp.add_argument("--json", action="store_true", dest="json_output")
 
     sp = sub.add_parser("eval", help="Run an offline or online eval.")
@@ -100,6 +108,11 @@ def _build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--config", default=DEFAULT_CONFIG_PATH)
     sp.add_argument("--offline", action="store_true",
                     help="Only use fixture outputs; never call a model.")
+    sp.add_argument(
+        "--allow-skipped",
+        action="store_true",
+        help="Exit 0 even if the result is skipped (e.g. no dataset).",
+    )
     sp.add_argument("--json", action="store_true", dest="json_output")
 
     sp = sub.add_parser("baseline", help="Baseline report tooling.")
@@ -108,6 +121,21 @@ def _build_parser() -> argparse.ArgumentParser:
                            help="Compare two eval reports by pass rate.")
     sp_c.add_argument("a")
     sp_c.add_argument("b")
+    sp_c.add_argument(
+        "--max-regression",
+        type=float,
+        default=None,
+        help="Allowed regression in [0,1]. If set and the regression is at "
+             "or below this value, verdict is 'within_threshold' rather "
+             "than 'regressed'. Reads [evals.*].max_regression by default.",
+    )
+    sp_c.add_argument(
+        "--eval-kind",
+        choices=["smoke", "full"],
+        default="full",
+        help="Which eval config to read max_regression from when --max-regression is not set.",
+    )
+    sp_c.add_argument("--config", default=DEFAULT_CONFIG_PATH)
     sp_c.add_argument("--json", action="store_true", dest="json_output")
 
     sp = sub.add_parser("explain", help="Explain a stage or policy topic.")
@@ -127,6 +155,14 @@ def _build_parser() -> argparse.ArgumentParser:
                     help="Project name (defaults to current directory name).")
     sp.add_argument("--force", action="store_true",
                     help="Overwrite an existing harness.toml.")
+    sp.add_argument(
+        "--vendor",
+        action="store_true",
+        help="Vendor src/ai_harness/ alongside the executable so the project "
+             "is self-contained. Default is the 'global install' model: the "
+             "project only stores harness.toml, and contributors install the "
+             "harness CLI globally (see README).",
+    )
     sp.add_argument("--json", action="store_true", dest="json_output")
 
     return p
@@ -200,7 +236,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         evals: dict[str, dict[str, Any]] = {}
         for ename, ec in cfg.evals.items():
             try:
-                cases = load_dataset(ec.dataset)
+                cases = load_dataset(ec.dataset, project_root=cfg.project_root)
                 evals[ename] = {
                     "dataset": ec.dataset,
                     "loadable": True,
@@ -232,6 +268,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         result.status = STATUS_FAILED
         _emit(result, args.json_output)
         return EXIT_VALIDATION
+    warnings: list[str] = []
     # Validate declared commands: each argv must have a non-empty executable.
     for stage, arrays in cfg.commands.items():
         for argv in arrays:
@@ -242,7 +279,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     # Validate datasets.
     for ename, ec in cfg.evals.items():
         try:
-            load_dataset(ec.dataset)
+            load_dataset(ec.dataset, project_root=cfg.project_root)
         except DatasetError as e:
             result.add_error(f"[evals.{ename}]: {e}")
     # Check workflows reference known stages, workflows, or built-ins.
@@ -259,6 +296,29 @@ def _cmd_validate(args: argparse.Namespace) -> int:
                 result.add_error(
                     f"workflow '{wfname}' references unknown '{ref}'"
                 )
+    # Soft warnings: fields parsed but not enforced, or other advisory issues.
+    # NOTE on max_cost_usd: this field is "planned", not "enforced". The
+    # harness has no provider price table; the field is parsed, displayed
+    # in thresholds, and surfaces a warning under --strict. It will become
+    # enforced once a price-table integration is added. Don't enable --strict
+    # in CI unless you accept this warning or remove the field from your config.
+    for ename, ec in cfg.evals.items():
+        if ec.runner is None and ec.max_cost_usd is not None:
+            warnings.append(
+                f"[evals.{ename}].max_cost_usd={ec.max_cost_usd} is a "
+                f"PLANNED field — no cost tracking is implemented yet "
+                f"(planned: provider price tables)"
+            )
+        if ec.runner is not None and ec.repetitions and ec.repetitions > 1:
+            warnings.append(
+                f"[evals.{ename}].repetitions={ec.repetitions} with runner: "
+                f"each rep spawns the runner subprocess"
+            )
+    if cfg.project.workload == "other" and not cfg.commands:
+        warnings.append(
+            "[project].workload='other' but no [commands] defined; "
+            "harness can only run built-in stages"
+        )
     if result.errors:
         result.status = STATUS_FAILED
         _emit(result, args.json_output)
@@ -268,6 +328,22 @@ def _cmd_validate(args: argparse.Namespace) -> int:
         "workflows": sorted(cfg.workflows.keys()),
         "evals": sorted(cfg.evals.keys()),
     }
+    if warnings:
+        result.summary["warnings"] = warnings
+        sys.stderr.write(
+            "warnings (use --strict to fail):\n  - "
+            + "\n  - ".join(warnings)
+            + "\n"
+        )
+        if args.strict:
+            # The status must honestly reflect what happened: warnings are
+            # surfaced, --strict escalates them to a failure. The JSON
+            # output's status field MUST agree with the exit code.
+            result.status = STATUS_FAILED
+            for w in warnings:
+                result.add_error(f"strict warning: {w}")
+            _emit(result, args.json_output)
+            return EXIT_VALIDATION
     _emit(result, args.json_output)
     return EXIT_SUCCESS
 
@@ -297,10 +373,12 @@ def _cmd_run(args: argparse.Namespace) -> int:
         json_output=bool(args.json_output),
     )
     run_target(cfg, request, result)
-    rc = _status_to_rc(result.status)
-    _emit(result, args.json_output)
-    if rc != EXIT_SUCCESS:
+    rc = _status_to_rc(result.status, allow_skipped=bool(args.allow_skipped))
+    # Only print the human-readable exit_code footer when not in JSON mode;
+    # in JSON mode the caller already has status and can derive rc.
+    if not args.json_output and rc not in (EXIT_SUCCESS, EXIT_USAGE):
         sys.stdout.write(f"  exit_code: {rc}\n")
+    _emit(result, args.json_output)
     return rc
 
 
@@ -313,22 +391,35 @@ def _cmd_eval(args: argparse.Namespace) -> int:
         result.status = STATUS_FAILED
     elif stage.status == STATUS_BLOCKED and result.status == STATUS_PASSED:
         result.status = STATUS_BLOCKED
-    rc = _status_to_rc(result.status)
+    elif stage.status == STATUS_SKIPPED and result.status == STATUS_PASSED:
+        result.status = STATUS_SKIPPED
+    rc = _status_to_rc(result.status, allow_skipped=bool(args.allow_skipped))
     _emit(result, args.json_output)
     return rc
 
 
 def _cmd_baseline(args: argparse.Namespace) -> int:
     result = RunResult(command="baseline compare")
+    # Resolve max_regression: explicit flag > config file > None.
+    max_reg = args.max_regression
+    if max_reg is None:
+        try:
+            cfg = load_config(args.config)
+            ec = cfg.evals.get(args.eval_kind)
+            if ec is not None:
+                max_reg = ec.max_regression
+        except ConfigError:
+            pass  # silent; compare can run without config
     try:
-        delta = compare_reports(args.a, args.b)
+        delta = compare_reports(args.a, args.b, max_regression=max_reg)
     except FileNotFoundError as e:
         result.add_error(str(e))
         result.status = STATUS_FAILED
         _emit(result, args.json_output)
         return EXIT_VALIDATION
     result.summary["comparison"] = delta
-    if delta.get("regression", 0) > 0:
+    # Verdict "regressed" is a failure; "within_threshold" is acceptable.
+    if delta.get("verdict") == "regressed":
         result.status = STATUS_FAILED
     _emit(result, args.json_output)
     return _status_to_rc(result.status)
@@ -398,6 +489,32 @@ def _cmd_init(args: argparse.Namespace) -> int:
     if src_schema.exists():
         dst_schema.write_bytes(src_schema.read_bytes())
         actions.append(f"copied harness.schema.json -> {dst_schema}")
+
+    # 1b. If --vendor, copy src/ai_harness/ alongside so the project is
+    #     self-contained (works without HARNESS_HOME or global install).
+    #     Default is the global-install model: contributors install the
+    #     harness CLI globally and the project only commits the contract.
+    if args.vendor:
+        import shutil as _shutil
+
+        src_pkg = home / "src" / "ai_harness"
+        dst_pkg_dir = cwd / "src" / "ai_harness"
+        if src_pkg.is_dir():
+            if dst_pkg_dir.exists():
+                _shutil.rmtree(dst_pkg_dir)
+            dst_pkg_dir.parent.mkdir(parents=True, exist_ok=True)
+            _shutil.copytree(src_pkg, dst_pkg_dir)
+            # Drop __pycache__ if any leaked in.
+            for cache in dst_pkg_dir.rglob("__pycache__"):
+                _shutil.rmtree(cache, ignore_errors=True)
+            actions.append(
+                f"vendored src/ai_harness/ -> {dst_pkg_dir} "
+                f"(self-contained: works without HARNESS_HOME)"
+            )
+        else:
+            result.add_error(
+                f"--vendor requested but source package not found at {src_pkg}"
+            )
 
     # 2. Generate harness.toml from the closest example, or fall back to a
     #    synthesized config from language + workload + risk.
@@ -483,11 +600,19 @@ def _cmd_init(args: argparse.Namespace) -> int:
         actions.append("wrote .gitignore")
 
     result.summary["actions"] = actions
+    install_hint = (
+        "Project is self-contained (vendored src/ai_harness/); "
+        "./harness works without HARNESS_HOME."
+        if args.vendor
+        else "Install the harness CLI globally (see tom_harness README) or "
+             "set HARNESS_HOME; the ./harness entry alone is not self-contained."
+    )
     result.summary["next_steps"] = [
         "Edit harness.toml: name, dataset paths, [commands] for your tools.",
         "Replace evals/datasets/smoke.example.jsonl with your real samples.",
-        "Run ./harness doctor to verify your toolchain.",
-        "Run ./harness run check to run your project's checks.",
+        install_hint,
+        "Run ./harness doctor (or `harness doctor` if global) to verify toolchain.",
+        "Run ./harness run check (or `harness run check`) to run project checks.",
         "Run ./harness eval smoke --offline for offline AI eval.",
     ]
     result.summary["project"] = {
@@ -721,10 +846,13 @@ def _dataset_paths_in_toml(path: Path) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def _status_to_rc(status: str) -> int:
+def _status_to_rc(status: str, *, allow_skipped: bool = False) -> int:
+    if status == STATUS_SKIPPED:
+        # Skipped is reported honestly. Caller must opt into exit 0 via
+        # --allow-skipped to avoid silently treating skips as success.
+        return EXIT_SUCCESS if allow_skipped else EXIT_SKIPPED
     return {
         STATUS_PASSED: EXIT_SUCCESS,
-        STATUS_SKIPPED: EXIT_SUCCESS,  # not an error to skip
         STATUS_FAILED: EXIT_STAGE_FAILED,
         STATUS_BLOCKED: EXIT_POLICY_BLOCKED,
     }.get(status, EXIT_INTERNAL)

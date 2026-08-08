@@ -112,7 +112,7 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
         )
 
     # 3. Repo secret scan (best-effort, walks the working tree).
-    leaked = _scan_repo_for_secrets()
+    leaked = _scan_repo_for_secrets(scan_exclude=cfg.security.scan_exclude)
     if leaked:
         for hit in leaked[:10]:
             findings.append(f"[secret-scan] {hit}")
@@ -130,6 +130,7 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
             "require_approval_for": list(cfg.security.require_approval_for),
             "redact_inputs": cfg.security.redact_inputs,
             "redact_outputs": cfg.security.redact_outputs,
+            "scan_exclude": list(cfg.security.scan_exclude),
         },
     }
     if findings:
@@ -143,12 +144,20 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
     return stage
 
 
-def _scan_repo_for_secrets() -> list[str]:
-    """Walk the working tree, return human-readable hits for likely secrets."""
+def _scan_repo_for_secrets(scan_exclude: list[str] | None = None) -> list[str]:
+    """Walk the working tree, return human-readable hits for likely secrets.
+
+    `scan_exclude` is a list of glob patterns matched against the path
+    relative to project root (forward slashes). Matches skip the file
+    entirely. Use this for vendored dictionaries, generated code, large
+    text corpora that over-fire the secret patterns.
+    """
     hits: list[str] = []
     root = Path.cwd()
     # Use the same secret patterns as redaction but report the file:line.
     from .redaction import _SECRET_PATTERNS
+
+    excluded = _compile_exclude_patterns(scan_exclude or [])
 
     for path in _walk_text_files(root):
         try:
@@ -156,6 +165,9 @@ def _scan_repo_for_secrets() -> list[str]:
         except OSError:
             continue
         rel = str(path.relative_to(root))
+        # Honor user-supplied scan_exclude patterns first.
+        if _matches_exclude(rel, excluded):
+            continue
         # Skip fixture/test files: they legitimately contain secret-shaped
         # strings used to exercise the redactor and graders.
         if (
@@ -193,3 +205,48 @@ def _walk_text_files(root: Path):
             p = Path(dirpath) / fname
             if p.suffix.lower() in _TEXT_EXT:
                 yield p
+
+
+def _compile_exclude_patterns(patterns: list[str]) -> list[str]:
+    """Return patterns as-is (already strings); helper exists for symmetry
+    with future regex/anchor support. For now we use fnmatch per-pattern."""
+    return list(patterns)
+
+
+def _matches_exclude(rel_path: str, patterns: list[str]) -> bool:
+    """Return True if rel_path matches any of the user's exclude patterns.
+
+    Supports both glob semantics:
+      - `tools/data-sources/**` matches everything under that dir
+      - `*.min.js` matches anywhere
+      - `tools/dict.txt` matches only that exact path
+    """
+    import fnmatch
+
+    norm = rel_path.replace("\\", "/")
+    for pat in patterns:
+        p = pat.replace("\\", "/")
+        # Directory-tree glob: `dir/**` matches `dir/anything/...`.
+        # Keep the trailing slash so "tools/**" only matches paths under
+        # tools/, not "tools_meta/x.py".
+        if p.endswith("/**"):
+            prefix = p[:-2]  # "tools/**" -> "tools/"
+            if norm.startswith(prefix):
+                return True
+            # Also accept `dir` exactly (no slash).
+            if norm == p[:-3]:
+                return True
+            continue
+        # `dir/` (trailing slash without **) matches everything inside.
+        if p.endswith("/"):
+            if norm.startswith(p):
+                return True
+            continue
+        # Plain fnmatch against the full path or any path segment.
+        if fnmatch.fnmatch(norm, p):
+            return True
+        # Also match against just the basename, so `*.min.js` works on
+        # nested paths like `vendor/lib/foo.min.js`.
+        if "/" in norm and fnmatch.fnmatch(norm.rsplit("/", 1)[-1], p):
+            return True
+    return False

@@ -39,6 +39,10 @@ class EvalConfig:
     min_pass_rate: float | None = None
     repetitions: int = 1
     max_regression: float | None = None
+    # Optional subprocess runner argv. When set, the harness spawns this
+    # program, writes one Case JSON per line to stdin, and reads one Result
+    # JSON per line from stdout. Lets the SUT be any language.
+    runner: list[str] | None = None
 
 
 @dataclass
@@ -47,6 +51,11 @@ class SecurityConfig:
     redact_outputs: bool = True
     tool_allowlist: list[str] = field(default_factory=list)
     require_approval_for: list[str] = field(default_factory=list)
+    # Glob patterns for files/dirs the secret-scan should skip. Use this
+    # for vendored dictionaries, large text corpora, generated code, etc.
+    # Patterns are matched with fnmatch against the path RELATIVE to the
+    # project root (forward slashes on all platforms).
+    scan_exclude: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -59,16 +68,21 @@ class Config:
     security: SecurityConfig = field(default_factory=SecurityConfig)
     source_path: str | None = None
     unknown_fields: list[str] = field(default_factory=list)
+    # Directory of the config file. All relative paths in datasets, reports
+    # and prompts resolve against this (NOT the process cwd), so callers
+    # can run `harness validate --config /abs/path/harness.toml` from any cwd.
+    project_root: Path = field(default_factory=lambda: Path.cwd())
 
 
 # Top-level keys allowed in harness.toml. Unknown keys => validation error.
-_ALLOWED_TOP = {"version", "project", "commands", "workflows", "evals", "security"}
+_ALLOWED_TOP = {"version", "project", "commands", "workflows", "evals", "security", "extends"}
 _ALLOWED_PROJECT = {"name", "language", "workload", "risk"}
 _ALLOWED_SECURITY = {
     "redact_inputs",
     "redact_outputs",
     "tool_allowlist",
     "require_approval_for",
+    "scan_exclude",
 }
 _ALLOWED_EVAL_KEYS = {
     "dataset",
@@ -78,6 +92,7 @@ _ALLOWED_EVAL_KEYS = {
     "min_pass_rate",
     "repetitions",
     "max_regression",
+    "runner",
 }
 _ALLOWED_LANGUAGES = {"python", "typescript", "go", "rust", "jvm", "dotnet", "other"}
 _ALLOWED_WORKLOADS = {
@@ -131,6 +146,22 @@ def _build_config(raw: dict[str, Any], source_path: str | None = None) -> Config
             f"Supported major versions: {SUPPORTED_CONFIG_VERSIONS}."
         )
 
+    # Resolve `extends` BEFORE parsing the rest — profile values fill in
+    # defaults; the project's own fields override them.
+    extends = raw.get("extends", [])
+    if extends:
+        if not isinstance(extends, list) or not all(
+            isinstance(x, str) for x in extends
+        ):
+            raise ConfigError(
+                "extends must be a list of profile names like "
+                "['languages.python', 'workloads.rag', 'risk.standard']"
+            )
+        base_root = (
+            Path(source_path).parent if source_path else Path.cwd()
+        )
+        raw = _merge_profiles(extends, raw, base_root=base_root)
+
     if "project" not in raw:
         raise ConfigError("Missing required section: [project]")
     project = _build_project(raw["project"])
@@ -157,8 +188,108 @@ def _build_config(raw: dict[str, Any], source_path: str | None = None) -> Config
         evals=evals,
         security=security,
         source_path=source_path,
+        project_root=(Path(source_path).parent if source_path else Path.cwd()),
     )
     return cfg
+
+
+def _merge_profiles(
+    extends: list[str],
+    project_raw: dict[str, Any],
+    *,
+    base_root: Path,
+) -> dict[str, Any]:
+    """Merge a chain of profile TOMLs into the project raw config.
+
+    Load order: earlier profiles are the base; later profiles override.
+    Project's own fields always win over all profiles.
+
+    Merge rules:
+      - scalar fields: later wins
+      - [commands]: per-stage replace (project's stage definition wins entirely)
+      - [workflows]: per-workflow replace
+      - [evals.X]: per-eval replace
+      - [security]: field-by-field merge (scalars)
+      - [project]: field-by-field merge
+    """
+    merged: dict[str, Any] = {}
+    sources: list[str] = []
+    for ref in extends:
+        profile_raw = _load_profile(ref, base_root=base_root)
+        sources.append(ref)
+        merged = _deep_merge_profile(merged, profile_raw)
+    # Project wins last.
+    final = _deep_merge_profile(merged, project_raw)
+    return final
+
+
+def _load_profile(ref: str, *, base_root: Path) -> dict[str, Any]:
+    """Load `languages.python` -> profiles/languages/python.toml relative to base_root.
+
+    Search order: <base_root>/profiles/<ref.dotless>.toml, then walk up to
+    find a `profiles/` dir.
+    """
+    if "." not in ref:
+        raise ConfigError(
+            f"profile ref '{ref}' must be like 'languages.python', "
+            f"'workloads.rag', or 'risk.standard'"
+        )
+    parts = ref.split(".")
+    if len(parts) != 2 or parts[0] not in {"languages", "workloads", "risk"}:
+        raise ConfigError(
+            f"profile ref '{ref}' must start with languages/ workloads/ or risk/"
+        )
+    rel = Path("profiles") / parts[0] / f"{parts[1]}.toml"
+    # Try base_root first, then walk up to 5 ancestors.
+    candidates = [base_root / rel]
+    for parent in base_root.parents:
+        candidates.append(parent / rel)
+        if len(candidates) > 6:
+            break
+    for c in candidates:
+        if c.exists():
+            try:
+                with c.open("rb") as f:
+                    return tomllib.load(f)
+            except tomllib.TOMLDecodeError as e:
+                raise ConfigError(
+                    f"profile '{ref}' ({c}) has invalid TOML: {e}"
+                ) from e
+    raise ConfigError(
+        f"profile '{ref}' not found (looked for {rel} in {base_root} and ancestors)"
+    )
+
+
+def _deep_merge_profile(
+    base: dict[str, Any], overlay: dict[str, Any]
+) -> dict[str, Any]:
+    """Deep-merge overlay on top of base. Per-section merge rules.
+
+    - Top-level tables ([project], [security]): merge field-by-field.
+    - Top-level maps of sub-tables ([commands], [workflows]): per-key replace.
+    - [evals.X] tables: per-eval replace.
+    """
+    out = dict(base)
+    for k, v in overlay.items():
+        if k == "project" or k == "security":
+            existing = dict(out.get(k, {}))
+            existing.update(v if isinstance(v, dict) else {})
+            out[k] = existing
+        elif k in ("commands", "workflows"):
+            existing = dict(out.get(k, {}))
+            existing.update(v if isinstance(v, dict) else {})
+            out[k] = existing
+        elif k == "evals":
+            # Map of eval-name -> table. Per-eval replace.
+            existing = dict(out.get(k, {}))
+            for ename, ebody in (v if isinstance(v, dict) else {}).items():
+                # Per-eval: replace entirely; user can opt to copy fields
+                # they want to keep from the profile by re-stating them.
+                existing[ename] = ebody
+            out[k] = existing
+        else:
+            out[k] = v
+    return out
 
 
 def _build_project(raw: Any) -> ProjectInfo:
@@ -233,6 +364,17 @@ def _build_evals(raw: Any) -> dict[str, EvalConfig]:
         dataset = body["dataset"]
         if not isinstance(dataset, str):
             raise ConfigError(f"[evals.{name}].dataset must be a string path")
+        # runner is an optional argv array; validate non-empty strings.
+        runner = body.get("runner")
+        if runner is not None:
+            if not isinstance(runner, list) or not runner:
+                raise ConfigError(
+                    f"[evals.{name}].runner must be a non-empty argv array"
+                )
+            if not all(isinstance(x, str) for x in runner):
+                raise ConfigError(
+                    f"[evals.{name}].runner argv must contain only strings"
+                )
         out[name] = EvalConfig(
             dataset=dataset,
             sample_limit=body.get("sample_limit"),
@@ -241,6 +383,7 @@ def _build_evals(raw: Any) -> dict[str, EvalConfig]:
             min_pass_rate=body.get("min_pass_rate"),
             repetitions=int(body.get("repetitions", 1)),
             max_regression=body.get("max_regression"),
+            runner=runner,
         )
     return out
 
@@ -267,11 +410,17 @@ def _build_security(raw: Any) -> SecurityConfig:
                 f"[security].require_approval_for entry '{a}' not in "
                 f"{sorted(_ALLOWED_APPROVAL)}"
             )
+    scan_exclude = raw.get("scan_exclude", [])
+    if not isinstance(scan_exclude, list) or not all(
+        isinstance(t, str) for t in scan_exclude
+    ):
+        raise ConfigError("[security].scan_exclude must be a list of glob patterns")
     return SecurityConfig(
         redact_inputs=bool(raw.get("redact_inputs", True)),
         redact_outputs=bool(raw.get("redact_outputs", True)),
         tool_allowlist=list(tool_allowlist),
         require_approval_for=list(approval),
+        scan_exclude=list(scan_exclude),
     )
 
 

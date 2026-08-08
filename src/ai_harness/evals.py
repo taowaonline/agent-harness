@@ -9,9 +9,12 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import re
+import shutil
 import statistics
 import time
+import uuid
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Callable
@@ -71,6 +74,9 @@ class EvalReport:
     cases: list[dict[str, Any]]
     thresholds: dict[str, Any]
     status: str
+    # Unique per-run id; included in the persisted filename so that two
+    # evals started in the same second never overwrite each other.
+    run_id: str = field(default_factory=lambda: uuid.uuid4().hex)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -81,9 +87,15 @@ class EvalReport:
 # ---------------------------------------------------------------------------
 
 
-def load_dataset(path: str | Path) -> list[EvalCase]:
-    """Load and validate a JSONL dataset. Raises DatasetError on any issue."""
+def load_dataset(path: str | Path, *, project_root: Path | None = None) -> list[EvalCase]:
+    """Load and validate a JSONL dataset. Raises DatasetError on any issue.
+
+    If `path` is relative and `project_root` is given, resolves against
+    `project_root` rather than the process cwd.
+    """
     p = Path(path)
+    if not p.is_absolute() and project_root is not None:
+        p = project_root / p
     if not p.exists():
         raise DatasetError(f"Dataset not found: {path}")
     seen_ids: set[str] = set()
@@ -305,6 +317,138 @@ def register_grader(name: str, fn: Grader) -> None:
 # ---------------------------------------------------------------------------
 
 
+class _RunnerError(Exception):
+    """Raised when a subprocess runner fails terminally."""
+
+
+def _invoke_subprocess_runner(
+    ec: EvalConfig, cases: list[EvalCase], result: RunResult
+) -> dict[str, dict[str, Any]]:
+    """Spawn `ec.runner` argv, feed cases on stdin, read results from stdout.
+
+    Protocol:
+      - stdin: one Case JSON per line. Each line is the full record from the
+        dataset (id/input/expected/tags/metadata).
+      - stdout: one Result JSON per line, in the same order as input.
+        Each result must contain at least `case_id` and `output`.
+      - stderr: diagnostic logs (will be redacted on capture).
+      - exit code: 0 = success, non-zero = runner failure (all cases error).
+
+    Timeout semantics: `ec.timeout_seconds` (default 600s) is the **whole
+    subprocess timeout** passed to `subprocess.run`. It is NOT a per-line
+    or per-case budget. If you need per-case timeouts, the runner itself
+    must enforce them internally.
+
+    Errors and protocol violations raise `_RunnerError`, which the caller
+    turns into a stage failure. Specifically:
+      - non-zero runner exit
+      - subprocess timeout
+      - line count mismatch (stdout has fewer/more lines than stdin)
+      - malformed JSON on a stdout line
+      - missing or non-string `case_id` field
+      - `case_id` does not match the corresponding input case id
+
+    Any of these is considered a runner-contract violation; the eval stage
+    fails rather than silently degrading. Positional validation makes the
+    duplicate/unknown case_id scenario impossible — any reordering surfaces
+    as a mismatch on the first affected line.
+    """
+    import subprocess
+
+    if not ec.runner:
+        return {}
+    argv = list(ec.runner)
+    exe = argv[0]
+    resolved = shutil.which(exe)
+    if resolved is None and not os.path.isabs(exe):
+        raise _RunnerError(
+            f"runner executable '{exe}' not found on PATH"
+        )
+    # Build stdin payload.
+    stdin_lines: list[str] = []
+    expected_ids: list[str] = []
+    for case in cases:
+        line = json.dumps(
+            {
+                "id": case.id,
+                "input": case.input,
+                "expected": case.expected,
+                "tags": case.tags,
+                "metadata": case.metadata,
+            },
+            ensure_ascii=False,
+        )
+        stdin_lines.append(line)
+        expected_ids.append(case.id)
+    stdin_payload = "\n".join(stdin_lines) + "\n"
+    timeout = ec.timeout_seconds if ec.timeout_seconds else 600
+    try:
+        proc = subprocess.run(
+            argv,
+            shell=False,
+            input=stdin_payload,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except subprocess.TimeoutExpired as e:
+        raise _RunnerError(
+            f"runner timed out after {timeout}s ({len(cases)} cases)"
+        ) from e
+    except FileNotFoundError as e:
+        raise _RunnerError(f"runner executable vanished at exec time: {e}") from e
+    # Redact stderr before storing it anywhere.
+    stderr_redacted = redact(proc.stderr or "")
+    if proc.returncode != 0:
+        raise _RunnerError(
+            f"runner exited {proc.returncode}; stderr: {stderr_redacted[:500]}"
+        )
+    # Parse stdout. The runner must emit one JSON object per line, in the
+    # same order as the cases were sent, with `case_id` matching the input.
+    stdout_lines = [ln for ln in (proc.stdout or "").splitlines() if ln.strip()]
+    if len(stdout_lines) != len(cases):
+        raise _RunnerError(
+            f"runner returned {len(stdout_lines)} result lines for "
+            f"{len(cases)} input cases (line-count mismatch)"
+        )
+    outputs: dict[str, dict[str, Any]] = {}
+    for expected_id, line in zip(expected_ids, stdout_lines):
+        # Per-line malformed JSON is a contract violation, not a soft skip.
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError as e:
+            raise _RunnerError(
+                f"runner emitted malformed JSON for case '{expected_id}': "
+                f"{e.msg}; line: {line[:200]}"
+            ) from e
+        if not isinstance(rec, dict):
+            raise _RunnerError(
+                f"runner result for case '{expected_id}' is not a JSON object"
+            )
+        got_id = rec.get("case_id")
+        if not isinstance(got_id, str) or not got_id:
+            raise _RunnerError(
+                f"runner result for case '{expected_id}' missing string "
+                f"'case_id' field"
+            )
+        # Positional + value check: the runner must emit results in the
+        # same order as the cases were sent, and case_id must match the
+        # input. This implicitly catches duplicate / unknown / missing
+        # case_ids because any reordering surfaces as a mismatch on the
+        # first affected line.
+        if got_id != expected_id:
+            raise _RunnerError(
+                f"runner case_id mismatch: expected '{expected_id}', "
+                f"got '{got_id}' (results must be in input order)"
+            )
+        out = rec.get("output")
+        if not isinstance(out, dict):
+            out = {"answer": out} if out is not None else {}
+        outputs[got_id] = out
+    return outputs
+
+
 def run_eval(
     cfg: Config,
     name: str,
@@ -330,7 +474,7 @@ def run_eval(
     started_at = _now_iso()
     started = time.monotonic()
     try:
-        cases = load_dataset(ec.dataset)
+        cases = load_dataset(ec.dataset, project_root=cfg.project_root)
     except DatasetError as e:
         result.add_error(str(e))
         return StageResult(
@@ -340,12 +484,51 @@ def run_eval(
         )
     if ec.sample_limit is not None:
         cases = cases[: ec.sample_limit]
-    case_results: list[CaseResult] = []
-    for case in cases:
-        case_results.append(
-            _grade_case(case, ec, offline=offline, provider=provider)
+    # Honor `repetitions` (default 1). For non-deterministic workloads
+    # (chat/agent traces) the user sets this >1 and we report the worst
+    # pass_rate observed across reps. Each rep re-grades; fixture mode
+    # returns identical results so reps have no effect there.
+    reps = max(1, int(ec.repetitions or 1))
+    worst_summary: dict[str, Any] | None = None
+    final_case_results: list[CaseResult] = []
+    for _rep in range(reps):
+        # If a subprocess runner is configured, invoke it ONCE per rep.
+        runner_outputs: dict[str, dict[str, Any]] = {}
+        if ec.runner:
+            try:
+                runner_outputs = _invoke_subprocess_runner(ec, cases, result)
+            except _RunnerError as e:
+                result.add_error(f"runner: {e}")
+                return StageResult(
+                    name=name, kind="eval", status=STATUS_FAILED,
+                    reason=f"runner failed: {e}",
+                    started_at=started_at,
+                    duration_ms=int((time.monotonic() - started) * 1000),
+                )
+        case_results: list[CaseResult] = []
+        for case in cases:
+            case_results.append(
+                _grade_case(
+                case, ec,
+                offline=offline,
+                provider=provider,
+                runner_output=runner_outputs.get(case.id),
+            )
         )
-    summary = _summarize(case_results)
+        summary = _summarize(case_results)
+        # Track worst-case across repetitions.
+        if (
+            worst_summary is None
+            or summary.get("pass_rate", 0.0) < worst_summary.get("pass_rate", 1.0)
+        ):
+            worst_summary = summary
+            final_case_results = case_results
+    assert worst_summary is not None  # reps >= 1
+    summary = worst_summary
+    case_results = final_case_results
+    if reps > 1:
+        summary["repetitions"] = reps
+        summary["aggregation"] = "worst_pass_rate"
     thresholds = _threshold_block(ec)
     status = _apply_thresholds(summary, ec)
     report = EvalReport(
@@ -376,7 +559,7 @@ def run_eval(
         )
         result.add_error(stage.reason)
     # Persist the report under evals/reports/ for downstream comparison.
-    _persist_report(report)
+    _persist_report(report, project_root=cfg.project_root)
     return stage
 
 
@@ -386,10 +569,14 @@ def _grade_case(
     *,
     offline: bool,
     provider: "ModelProvider | None",
+    runner_output: dict[str, Any] | None = None,
 ) -> CaseResult:
     started = time.monotonic()
-    # Resolve the model output.
-    if provider is not None:
+    # Resolve the model output. Priority: runner_output (subprocess) >
+    # provider (Python callable) > fixture (offline dataset).
+    if runner_output is not None:
+        output = runner_output
+    elif provider is not None:
         try:
             output = provider(case)
         except Exception as e:  # noqa: BLE001
@@ -405,14 +592,14 @@ def _grade_case(
             return CaseResult(
                 case_id=case.id,
                 status="skipped",
-                reason="offline mode requires a fixture output",
+                reason="offline mode requires a fixture output or runner",
                 duration_ms=int((time.monotonic() - started) * 1000),
             )
     else:
         return CaseResult(
             case_id=case.id,
             status="error",
-            reason="no provider configured for online eval",
+            reason="no provider or runner configured for online eval",
             duration_ms=int((time.monotonic() - started) * 1000),
         )
     if not isinstance(output, dict):
@@ -560,17 +747,24 @@ def _git_sha() -> str:
     return "unknown"
 
 
-def _persist_report(report: EvalReport) -> Path:
-    out_dir = Path("evals/reports")
+def _persist_report(report: EvalReport, *, project_root: Path | None = None) -> Path:
+    base = project_root if project_root is not None else Path.cwd()
+    out_dir = base / "evals" / "reports"
     out_dir.mkdir(parents=True, exist_ok=True)
     safe_started = report.started_at.replace(":", "").replace("-", "")
-    fname = f"{report.name}-{safe_started}.json"
+    # Include the run_id short hash so two evals started in the same second
+    # never overwrite each other.
+    fname = f"{report.name}-{safe_started}-{report.run_id[:8]}.json"
     out = out_dir / fname
-    # The report is a generated artifact — gitignored.
     payload = report.to_dict()
     text = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True)
     redacted = redact(text)
-    out.write_text(redacted, encoding="utf-8")
+    # Atomic write: temp file + rename so an interrupted process leaves
+    # either the previous file intact or the new file complete — never a
+    # half-written JSON.
+    tmp = out.with_suffix(".json.tmp")
+    tmp.write_text(redacted, encoding="utf-8")
+    os.replace(tmp, out)
     return out
 
 
@@ -578,23 +772,41 @@ def _persist_report(report: EvalReport) -> Path:
 ModelProvider = Callable[[EvalCase], dict[str, Any]]
 
 
-def compare_reports(a_path: str, b_path: str) -> dict[str, Any]:
-    """Compare two eval reports and surface deltas."""
+def compare_reports(
+    a_path: str,
+    b_path: str,
+    *,
+    max_regression: float | None = None,
+) -> dict[str, Any]:
+    """Compare two eval reports and surface deltas.
+
+    `max_regression` (0.0–1.0): if set and the regression is at or below
+    the threshold, the verdict is `within_threshold` rather than `regressed`.
+    When called via `harness baseline compare --max-regression N` or via
+    `--config <eval>`, the configured threshold gates the verdict.
+    """
     a = json.loads(Path(a_path).read_text(encoding="utf-8"))
     b = json.loads(Path(b_path).read_text(encoding="utf-8"))
     sa = a.get("summary", {})
     sb = b.get("summary", {})
     pass_delta = sb.get("pass_rate", 0.0) - sa.get("pass_rate", 0.0)
     regression = -pass_delta if pass_delta < 0 else 0.0
+    # Decide verdict honoring max_regression if provided.
+    if regression > 0 and max_regression is not None and regression <= max_regression:
+        verdict = "within_threshold"
+    elif pass_delta > 0:
+        verdict = "improved"
+    elif pass_delta < 0:
+        verdict = "regressed"
+    else:
+        verdict = "unchanged"
     return {
         "a": {"path": a_path, "pass_rate": sa.get("pass_rate")},
         "b": {"path": b_path, "pass_rate": sb.get("pass_rate")},
         "pass_rate_delta": round(pass_delta, 4),
         "regression": round(regression, 4),
-        "verdict": (
-            "improved" if pass_delta > 0 else
-            "regressed" if pass_delta < 0 else "unchanged"
-        ),
+        "allowed_regression": max_regression,
+        "verdict": verdict,
     }
 
 

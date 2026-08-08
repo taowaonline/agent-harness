@@ -1,9 +1,14 @@
 name: security
 
 # Security posture: secret scanning + dependency audit + harness built-in
-# security check. External scanners (gitleaks, trivy, pip-audit, etc.) are
-# integration points — if they are not installed, this workflow explains
-# how to install them and reports clearly when they are missing.
+# security check. Behavior for missing external scanners is RISK-AWARE:
+#
+#   prototype risk  → notice (current default; nothing breaks)
+#   standard risk   → warning (CI passes but issue is visible)
+#   high-risk       → blocked (CI fails if scanner absent or finds issues)
+#
+# The risk level is read from harness.toml's [project].risk by the
+# detect-risk step; defaults to 'standard' when no config is present.
 
 on:
   push:
@@ -15,11 +20,40 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  detect-risk:
+    name: detect risk level
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      risk: ${{ steps.set.outputs.risk }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read project risk from harness.toml
+        id: set
+        run: |
+          if [ -f harness.toml ]; then
+            RISK=$(python3 -c "
+            import re,sys
+            t=open('harness.toml').read()
+            m=re.search(r'(?m)^\s*risk\s*=\s*\"([^\"]+)\"', t)
+            print(m.group(1) if m else 'standard')
+            " 2>/dev/null || echo standard)
+          else
+            RISK=standard
+          fi
+          echo "risk=$RISK" >> "$GITHUB_OUTPUT"
+          echo "Detected risk level: $RISK"
+
   secret-scan:
     name: secret scanning
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: detect-risk
     steps:
       - uses: actions/checkout@v4
         with:
@@ -33,18 +67,46 @@ jobs:
       - name: Harness built-in security check
         run: ./harness run security
 
-      - name: gitleaks (if installed)
+      - name: Install gitleaks (high-risk only)
+        if: needs.detect-risk.outputs.risk == 'high-risk'
         run: |
+          # Pin to a known-good gitleaks version.
+          GITLEAKS_VERSION=8.21.2
+          curl -sSL -o /tmp/gitleaks.tgz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          sudo tar -xzf /tmp/gitleaks.tgz -C /usr/local/bin gitleaks
+          sudo chmod +x /usr/local/bin/gitleaks
+
+      - name: gitleaks (risk-aware)
+        run: |
+          RISK="${{ needs.detect-risk.outputs.risk }}"
           if command -v gitleaks >/dev/null 2>&1; then
-            gitleaks detect --source . --no-banner --redact
+            if gitleaks detect --source . --no-banner --redact; then
+              echo "gitleaks: clean"
+            else
+              echo "::error::gitleaks found secrets"
+              exit 1
+            fi
           else
-            echo "::notice::gitleaks is not installed. Install: https://github.com/gitleaks/gitleaks/releases"
+            case "$RISK" in
+              prototype)
+                echo "::notice::gitleaks not installed; prototype risk accepts this."
+                ;;
+              standard)
+                echo "::warning::gitleaks not installed; standard risk recommends installing it."
+                ;;
+              high-risk)
+                echo "::error::gitleaks required for high-risk projects but not installed."
+                exit 1
+                ;;
+            esac
           fi
 
   dependency-scan:
     name: dependency scanning
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: detect-risk
     steps:
       - uses: actions/checkout@v4
 
@@ -53,10 +115,31 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: pip-audit (if installed)
+      - name: Install pip-audit (standard+high-risk)
+        if: needs.detect-risk.outputs.risk != 'prototype'
+        run: pip install pip-audit
+
+      - name: pip-audit (risk-aware)
         run: |
+          RISK="${{ needs.detect-risk.outputs.risk }}"
           if command -v pip-audit >/dev/null 2>&1; then
-            pip-audit --strict
+            if pip-audit --strict; then
+              echo "pip-audit: clean"
+            else
+              echo "::error::pip-audit found vulnerable dependencies"
+              exit 1
+            fi
           else
-            echo "::notice::pip-audit is not installed. Install with 'pip install pip-audit'."
+            case "$RISK" in
+              prototype)
+                echo "::notice::pip-audit not installed; prototype risk accepts this."
+                ;;
+              standard)
+                echo "::warning::pip-audit not installed; standard risk recommends installing it."
+                ;;
+              high-risk)
+                echo "::error::pip-audit required for high-risk but not installed."
+                exit 1
+                ;;
+            esac
           fi

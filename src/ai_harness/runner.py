@@ -80,13 +80,16 @@ def run_target(cfg: Config, request: RunRequest, result: RunResult) -> RunResult
         result.status = STATUS_FAILED
         return result
     result.stages.append(stage)
+    # Propagate stage status to top-level result honestly.
+    # PASSED is only kept if the stage actually passed. SKIPPED at the
+    # top must not silently claim PASSED — the caller can opt into
+    # exit-0 via --allow-skipped if it accepts the skip.
     if stage.status == STATUS_FAILED:
         result.status = STATUS_FAILED
     elif stage.status == STATUS_BLOCKED and result.status == STATUS_PASSED:
         result.status = STATUS_BLOCKED
     elif stage.status == STATUS_SKIPPED and result.status == STATUS_PASSED:
-        # Skipped stages do not flip an otherwise-passed run to failed.
-        pass
+        result.status = STATUS_SKIPPED
     return result
 
 
@@ -131,13 +134,26 @@ def _run_workflow(
             break  # fail fast — do not run remaining stages
         elif child.status == STATUS_BLOCKED and overall != STATUS_FAILED:
             overall = STATUS_BLOCKED
-        elif child.status == STATUS_SKIPPED and overall == STATUS_PASSED:
-            overall = STATUS_SKIPPED if all(
-                c.status == STATUS_SKIPPED for c in wf_result.children
-            ) else overall
-    wf_result.status = overall
-    if request.dry_run and overall == STATUS_SKIPPED:
+        elif child.status == STATUS_SKIPPED:
+            # Any skip in the workflow means overall cannot remain PASSED.
+            # If we haven't seen a failure/block, escalate to SKIPPED.
+            if overall == STATUS_PASSED:
+                overall = STATUS_SKIPPED
+    # If dry-run, force SKIPPED at the workflow level (never PASSED).
+    if request.dry_run and overall != STATUS_FAILED:
+        overall = STATUS_SKIPPED
         wf_result.reason = "dry-run"
+    elif overall == STATUS_SKIPPED and not wf_result.reason:
+        skipped = [c.name for c in wf_result.children if c.status == STATUS_SKIPPED]
+        passed = [c.name for c in wf_result.children if c.status == STATUS_PASSED]
+        if skipped and passed:
+            wf_result.reason = (
+                f"partial: {len(passed)} passed, {len(skipped)} skipped "
+                f"(skipped: {', '.join(skipped)})"
+            )
+        elif skipped:
+            wf_result.reason = "all stages skipped"
+    wf_result.status = overall
     wf_result.duration_ms = int((time.monotonic() - started) * 1000)
     return wf_result
 

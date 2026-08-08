@@ -103,26 +103,43 @@ class CLIIntegrationTests(unittest.TestCase):
         )
 
     def test_run_check_dry_run(self) -> None:
-        rc, out, err = self._run("run", "check", "--dry-run", "--json")
+        # Dry-run is honest: top status is SKIPPED, not PASSED.
+        # Use --allow-skipped to opt into exit 0 for dry-runs.
+        rc, out, err = self._run(
+            "run", "check", "--dry-run", "--allow-skipped", "--json"
+        )
         self.assertEqual(rc, EXIT_SUCCESS, err + out)
         data = json.loads(out)
-        # Dry-run keeps top-level status as passed (skipped is not failure).
-        self.assertEqual(data["status"], "passed")
-        # The workflow stage is reported as skipped with reason dry-run.
+        self.assertEqual(data["status"], "skipped")
         wf = data["stages"][0]
         self.assertEqual(wf["status"], "skipped")
         self.assertEqual(wf["reason"], "dry-run")
 
+    def test_run_check_dry_run_without_allow_skipped(self) -> None:
+        rc, out, err = self._run("run", "check", "--dry-run", "--json")
+        # Dry-run without --allow-skipped must return EXIT_SKIPPED (10).
+        self.assertEqual(rc, 10)
+
     def test_run_check_real(self) -> None:
-        rc, out, err = self._run("run", "check", "--json")
+        # The HARNESS_TOML fixture has typecheck=[], which now correctly
+        # surfaces as SKIPPED at the top level (honest semantics, no
+        # silent claim of passed). Use --allow-skipped to opt into exit 0.
+        rc, out, err = self._run("run", "check", "--allow-skipped", "--json")
         self.assertEqual(rc, EXIT_SUCCESS, err + out)
         data = json.loads(out)
-        self.assertEqual(data["status"], "passed")
+        self.assertEqual(data["status"], "skipped")  # because typecheck=[]
         wf = data["stages"][0]
         statuses = [c["status"] for c in wf["children"]]
         # typecheck should be skipped; lint and test-unit should pass.
         self.assertIn("skipped", statuses)
         self.assertIn("passed", statuses)
+
+    def test_run_check_without_allow_skipped_returns_nonzero(self) -> None:
+        rc, out, err = self._run("run", "check", "--json")
+        # Without --allow-skipped, partial-skip must not silently exit 0.
+        self.assertEqual(rc, 10)
+        data = json.loads(out)
+        self.assertEqual(data["status"], "skipped")
 
     def test_run_failure_returns_nonzero(self) -> None:
         (self.dir / "harness.toml").write_text(

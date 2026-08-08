@@ -5,45 +5,48 @@ Resolves the source tree so the user never needs to remember a Python
 module path or set PYTHONPATH. Resolution order:
 
   1. `<this script's dir>/src`           — running from the source repo
-  2. `$HARNESS_HOME/src`                 — explicit override (set by user
-                                            or by the global wrapper)
-  3. `<known install path>/src`          — the canonical install location
-  4. bare `import ai_harness`            — installed via pip / pipx
+  2. `$HARNESS_HOME/src`                 — explicit override
+  3. bare `import ai_harness`            — installed via pip / pipx
+
+No hardcoded canonical path. If all three resolutions fail the script
+prints actionable install instructions and exits.
 """
 
 import os
 import sys
 
 
-# The canonical install location. Edit if you relocate the source repo,
-# or set HARNESS_HOME in the environment.
-_CANONICAL_HOME = "/Users/tommacmini4/Documents/code/harness"
-
-
 def _bootstrap() -> int:
     here = os.path.dirname(os.path.abspath(__file__))
 
-    candidates = [
-        os.path.join(here, "src"),
-        os.environ.get("HARNESS_HOME", ""),
-        _CANONICAL_HOME,
-    ]
-    for c in candidates:
-        if not c:
-            continue
-        src = os.path.join(c, "src") if not c.endswith("/src") else c
-        if os.path.isdir(src) and src not in sys.path:
-            sys.path.insert(0, src)
-            break
+    # 1. Adjacent src/ (running from source repo or vendored layout)
+    local_src = os.path.join(here, "src")
+    if os.path.isdir(local_src):
+        sys.path.insert(0, local_src)
 
+    # 2. HARNESS_HOME env var (explicit override)
+    env_home = os.environ.get("HARNESS_HOME", "")
+    if env_home:
+        env_src = os.path.join(env_home, "src")
+        if os.path.isdir(env_src) and env_src not in sys.path:
+            sys.path.insert(0, env_src)
+
+    # 3. Try to import. If ai_harness is pip-installed, this works without
+    #    any sys.path manipulation.
     try:
         from ai_harness.cli import main
     except ImportError as e:
         sys.stderr.write(
             f"harness: cannot find ai_harness package ({e}).\n"
-            f"  Tried: {candidates}\n"
-            f"  Set HARNESS_HOME to the source repo, or "
-            f"pip install the package.\n"
+            f"\n"
+            f"One of these must hold:\n"
+            f"  - Run from a checkout that has ./src/ai_harness/ next to this script\n"
+            f"  - Set HARNESS_HOME to the source repo path\n"
+            f"  - Install the package: pip install --user ai-harness "
+            f"(or pipx install ai-harness)\n"
+            f"\n"
+            f"This script no longer hardcodes a fallback path. "
+            f"Vendored installs must ship src/ai_harness/ alongside.\n"
         )
         return 4  # internal error
 

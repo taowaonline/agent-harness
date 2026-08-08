@@ -14,7 +14,8 @@ EXIT_VALIDATION = 1
 EXIT_STAGE_FAILED = 2
 EXIT_POLICY_BLOCKED = 3
 EXIT_INTERNAL = 4
-EXIT_USAGE = 64  # arg parsing / usage error
+EXIT_SKIPPED = 10  # all-or-partial skipped without --allow-skipped
+EXIT_USAGE = 64    # arg parsing / usage error
 
 
 class PolicyError(Exception):

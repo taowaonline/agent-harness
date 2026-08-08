@@ -11,6 +11,11 @@
       "description": "Major config version. Unknown majors are rejected.",
       "enum": [1]
     },
+    "extends": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Profile refs to load and merge before this config. Format: 'languages.python', 'workloads.rag', 'risk.standard'. Order = base-first; project fields always win."
+    },
     "project": {
       "type": "object",
       "required": ["name", "language"],
@@ -33,15 +38,14 @@
     },
     "commands": {
       "type": "object",
-      "description": "Map of stable stage name to one or more argv arrays.",
+      "description": "Map of stable stage name to one or more argv arrays. An empty array means 'explicitly no command' (the runner reports this stage as skipped with reason 'not configured').",
       "additionalProperties": {
         "type": "array",
         "items": {
           "type": "array",
           "items": {"type": "string"},
           "minItems": 1
-        },
-        "minItems": 1
+        }
       }
     },
     "workflows": {
@@ -76,6 +80,11 @@
             "type": "string",
             "enum": ["external_write", "delete", "payment", "deploy", "network_egress", "privileged"]
           }
+        },
+        "scan_exclude": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Glob patterns (fnmatch) for files/dirs the secret-scan should skip. Matched against path relative to project root with forward slashes. Use for vendored dictionaries, generated code, etc."
         }
       }
     }
@@ -92,7 +101,13 @@
         "max_cost_usd": {"type": "number", "minimum": 0},
         "min_pass_rate": {"type": "number", "minimum": 0, "maximum": 1},
         "repetitions": {"type": "integer", "minimum": 1},
-        "max_regression": {"type": "number", "minimum": 0, "maximum": 1}
+        "max_regression": {"type": "number", "minimum": 0, "maximum": 1},
+        "runner": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1,
+          "description": "Optional argv for a subprocess runner that consumes Case JSON on stdin and produces Result JSON on stdout."
+        }
       }
     }
   }
