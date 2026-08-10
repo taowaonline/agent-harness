@@ -43,6 +43,12 @@ class EvalConfig:
     # program, writes one Case JSON per line to stdin, and reads one Result
     # JSON per line from stdout. Lets the SUT be any language.
     runner: list[str] | None = None
+    # Cost enforcement: by default `max_cost_usd` is advisory (warned but
+    # not blocked) because the harness has no provider price table. Set
+    # `enforce_max_cost = true` to make the runner's reported cost a hard
+    # gate (over budget → stage FAILED). The runner must emit a top-level
+    # `cost_usd` field per case for this to take effect.
+    enforce_max_cost: bool = False
 
 
 @dataclass
@@ -93,6 +99,7 @@ _ALLOWED_EVAL_KEYS = {
     "repetitions",
     "max_regression",
     "runner",
+    "enforce_max_cost",
 }
 _ALLOWED_LANGUAGES = {"python", "typescript", "go", "rust", "jvm", "dotnet", "other"}
 _ALLOWED_WORKLOADS = {
@@ -346,6 +353,12 @@ def _build_evals(raw: Any) -> dict[str, EvalConfig]:
                 raise ConfigError(f"[evals.{name}].runner must be a non-empty argv array")
             if not all(isinstance(x, str) for x in runner):
                 raise ConfigError(f"[evals.{name}].runner argv must contain only strings")
+        # enforce_max_cost must be a bool if present.
+        enforce_cost = body.get("enforce_max_cost", False)
+        if not isinstance(enforce_cost, bool):
+            raise ConfigError(
+                f"[evals.{name}].enforce_max_cost must be a boolean"
+            )
         out[name] = EvalConfig(
             dataset=dataset,
             sample_limit=body.get("sample_limit"),
@@ -355,6 +368,7 @@ def _build_evals(raw: Any) -> dict[str, EvalConfig]:
             repetitions=int(body.get("repetitions", 1)),
             max_regression=body.get("max_regression"),
             runner=runner,
+            enforce_max_cost=enforce_cost,
         )
     return out
 

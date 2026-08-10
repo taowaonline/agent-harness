@@ -284,17 +284,23 @@ def _cmd_validate(args: argparse.Namespace) -> int:
             if ref not in known:
                 result.add_error(f"workflow '{wfname}' references unknown '{ref}'")
     # Soft warnings: fields parsed but not enforced, or other advisory issues.
-    # NOTE on max_cost_usd: this field is "planned", not "enforced". The
-    # harness has no provider price table; the field is parsed, displayed
-    # in thresholds, and surfaces a warning under --strict. It will become
-    # enforced once a price-table integration is added. Don't enable --strict
-    # in CI unless you accept this warning or remove the field from your config.
+    # NOTE on max_cost_usd: this field is advisory by default (the harness
+    # has no provider price table). With enforce_max_cost=true and a runner
+    # that emits cost_usd, it becomes a hard gate. The warning fires when
+    # the field is set but NOT enforced — surfacing the gap honestly.
     for ename, ec in cfg.evals.items():
-        if ec.runner is None and ec.max_cost_usd is not None:
+        if ec.max_cost_usd is not None and not ec.enforce_max_cost:
+            tag = "ADVISORY" if ec.runner else "PLANNED"
+            hint = (
+                "set enforce_max_cost=true and have the runner emit "
+                "cost_usd per case to make this a hard gate"
+                if ec.runner
+                else "no runner configured; cost tracking requires a runner "
+                "that emits cost_usd"
+            )
             warnings.append(
-                f"[evals.{ename}].max_cost_usd={ec.max_cost_usd} is a "
-                f"PLANNED field — no cost tracking is implemented yet "
-                f"(planned: provider price tables)"
+                f"[evals.{ename}].max_cost_usd={ec.max_cost_usd} is "
+                f"{tag} (not enforced): {hint}"
             )
         if ec.runner is not None and ec.repetitions and ec.repetitions > 1:
             warnings.append(

@@ -107,6 +107,11 @@
           "items": {"type": "string"},
           "minItems": 1,
           "description": "Optional argv for a subprocess runner that consumes Case JSON on stdin and produces Result JSON on stdout."
+        },
+        "enforce_max_cost": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, treat max_cost_usd as a hard gate: the runner must emit cost_usd per case; over-budget → stage FAILED. Default false (advisory only — no provider price table is bundled)."
         }
       }
     }

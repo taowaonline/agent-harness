@@ -419,6 +419,11 @@ def _invoke_subprocess_runner(
         out = rec.get("output")
         if not isinstance(out, dict):
             out = {"answer": out} if out is not None else {}
+        # Carry cost_usd into the output dict so the eval loop can sum it.
+        # The grader ignores unknown keys, so this is non-invasive.
+        cost = rec.get("cost_usd")
+        if isinstance(cost, int | float):
+            out["_cost_usd"] = float(cost)
         outputs[got_id] = out
     return outputs
 
@@ -466,6 +471,7 @@ def run_eval(
     reps = max(1, int(ec.repetitions or 1))
     worst_summary: dict[str, Any] | None = None
     final_case_results: list[CaseResult] = []
+    worst_cost_usd: float | None = None  # max cost seen across reps
     for _rep in range(reps):
         # If a subprocess runner is configured, invoke it ONCE per rep.
         runner_outputs: dict[str, dict[str, Any]] = {}
@@ -494,6 +500,22 @@ def run_eval(
                 )
             )
         summary = _summarize(case_results)
+        # Sum cost if runner reported it. _invoke_subprocess_runner
+        # carries cost_usd into each output dict as _cost_usd.
+        rep_cost: float | None = None
+        if runner_outputs:
+            rep_cost = 0.0
+            for out in runner_outputs.values():
+                c = out.get("_cost_usd")
+                if isinstance(c, int | float):
+                    rep_cost += float(c)
+                else:
+                    rep_cost = None  # any missing cost → can't aggregate
+                    break
+        if rep_cost is not None:
+            summary["cost_usd"] = round(rep_cost, 6)
+            if worst_cost_usd is None or rep_cost > worst_cost_usd:
+                worst_cost_usd = rep_cost
         # Track worst-case across repetitions.
         if worst_summary is None or summary.get("pass_rate", 0.0) < worst_summary.get(
             "pass_rate", 1.0
@@ -506,8 +528,23 @@ def run_eval(
     if reps > 1:
         summary["repetitions"] = reps
         summary["aggregation"] = "worst_pass_rate"
+    if worst_cost_usd is not None:
+        summary["worst_cost_usd"] = round(worst_cost_usd, 6)
     thresholds = _threshold_block(ec)
     status = _apply_thresholds(summary, ec)
+    # Cost enforcement gate. Only fires when enforce_max_cost=true AND the
+    # runner actually reported cost_usd. Default (advisory) doesn't block.
+    if (
+        ec.enforce_max_cost
+        and ec.max_cost_usd is not None
+        and worst_cost_usd is not None
+        and worst_cost_usd > ec.max_cost_usd
+    ):
+        status = STATUS_FAILED
+        result.add_error(
+            f"cost gate: ${worst_cost_usd:.4f} exceeds budget "
+            f"${ec.max_cost_usd:.4f} (enforce_max_cost=true)"
+        )
     report = EvalReport(
         name=name,
         dataset=ec.dataset,
