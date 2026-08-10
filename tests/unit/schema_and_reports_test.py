@@ -106,6 +106,44 @@ class ReportAtomicityTests(unittest.TestCase):
         self.assertIn("run_id", data)
         self.assertEqual(len(data["run_id"]), 32)  # uuid hex
 
+    def test_concurrent_persist_does_not_corrupt(self) -> None:
+        """§11.3: two processes writing to the same reports/ dir must not
+        interfere. PID-scoped temp files + os.replace guarantee isolation."""
+        import threading
+
+        errors: list[Exception] = []
+
+        def write_one():
+            try:
+                rep = self._make_report()
+                out = _persist_report(rep, project_root=self.dir)
+                # Read back and verify it's valid JSON.
+                data = json.loads(out.read_text())
+                assert "run_id" in data
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=write_one) for _ in range(10)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        self.assertEqual(errors, [])
+        # All 10 reports exist and are readable.
+        reports = list((self.dir / "evals" / "reports").glob("smoke-*.json"))
+        self.assertEqual(len(reports), 10)
+        for r in reports:
+            json.loads(r.read_text())  # no JSON decode error
+
+    def test_no_pid_tmp_files_left_after_persist(self) -> None:
+        """PID-scoped temp files must be cleaned up by os.replace."""
+        rep = self._make_report()
+        _persist_report(rep, project_root=self.dir)
+        # No leftover .tmp or .pid-tmp files.
+        leftovers = list((self.dir / "evals" / "reports").glob(".*tmp"))
+        self.assertEqual(leftovers, [])
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()

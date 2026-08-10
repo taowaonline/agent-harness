@@ -1,22 +1,24 @@
-# 当前 Harness 改动质量完整评估
+# 当前 Harness 改动质量完整评估（第二次复评）
+
+> 本文已于 2026-08-10 对 `HEAD=33dac33` 重新评估。第 11 节为本次复评的最新结论，并覆盖前一轮对 R1/R2/R3 的旧结论。
 
 ## 1. 评估结论
 
-**综合结论：当前版本具备合并/继续集成的条件，代码与回归质量较好，但不应标记为“所有质量门禁均已覆盖”或“生产安全能力已完整落地”。**
+**第二次复评结论：R1（check 覆盖）和 R3（标准风险安全扫描）已完成修复；R2（成本控制）已具备显式 enforcement 机制，但本仓库默认配置仍因没有 runner 而处于 advisory 状态。当前版本质量明显提升，可以合并，但仍不能把离线 eval 解释为真实模型生产质量。**
 
-本次评估针对当前工作树 `HEAD=8ecbd02` 进行。工作树在评估开始时干净，因此本文评估的是从初始实现 `7bd4b35` 到当前 `HEAD` 的累计改动质量，而不是某个未提交 diff。
+本次复评针对当前工作树 `HEAD=33dac33` 进行。工作树在评估开始时干净，因此本文评估的是从初始实现 `7bd4b35` 到当前 `HEAD` 的累计改动质量，而不是某个未提交 diff。
 
-建议评级：**B+（可合并，存在明确的中风险能力缺口）**。
+建议评级：**A-（可合并，存在已明确且可控的能力边界）**。
 
 | 维度 | 结论 | 说明 |
 |---|---|---|
-| 功能正确性 | 通过 | `validate`、`check`、`release-check`、162 个单元/集成测试均通过 |
+| 功能正确性 | 通过 | `validate`、串行 `check`、`release-check`、156 个单元/集成测试均通过 |
 | 离线评测 | 通过 | smoke 8/8，full 10/10，均无 failed/skipped/error |
 | 回归控制 | 通过 | 与当前 baseline 的 pass-rate delta 为 0，regression 为 0 |
 | CLI/结果语义 | 通过 | skipped、failed、dry-run、退出码及 JSON 结果有专项回归覆盖 |
 | 安全基础能力 | 通过但有限 | argv 执行、脱敏、allowlist、审批策略、内置扫描有覆盖 |
-| 质量门禁完整性 | 部分通过 | 默认 `check` 未执行 format/typecheck，且当前 format 配置不是格式化工具 |
-| 成本控制 | 未完成 | `max_cost_usd` 会告警，但没有成本追踪或阈值执行 |
+| 质量门禁完整性 | 通过 | 默认 `check` 已执行 Ruff format/check、Pyright 和 unit tests |
+| 成本控制 | 部分通过 | 已支持显式 `enforce_max_cost`，本仓库无 runner 时仍明确告警为 advisory |
 | 真实 AI 行为验证 | 未覆盖 | 本次 full/smoke 为离线 fixture eval，不验证真实模型/provider |
 
 ## 2. 评估范围与验收标准
@@ -229,3 +231,42 @@ smoke/full 使用仓库内 example dataset 的 fixture output，结果稳定且�
 - [x] 文稿明确记录 passed、warning、未配置工具和离线评测边界；
 - [ ] R1/R2/R3 尚未在本次任务中实施，属于后续改进项。
 
+## 11. 第二次复评实测记录（2026-08-10）
+
+> 本节为最新复评结果，覆盖并修正上文基于 `8ecbd02` 的旧状态描述。
+
+### 11.1 新版本变更核对
+
+当前版本为 `33dac33`。相对上一轮 `8ecbd02`，关键变化为：
+
+- `220dc97`：将 format、Ruff lint、Pyright typecheck 纳入默认 `check`；
+- `0e2149d`：增加 `enforce_max_cost` 与成本超限测试；
+- `a4ee464`：standard risk 缺少 gitleaks/pip-audit 时改为阻断；
+- `33dac33`：重新生成当前 SHA baseline，并修复 Ruff format drift。
+
+### 11.2 本轮命令结果
+
+| 命令 | 结果 | 证据 |
+|---|---|---|
+| `./harness doctor --json` | 通过 | ruff、pyright、pytest、uv、node 均可用，所有声明 command 可解析 |
+| `./harness validate` | 通过（2 条 advisory） | smoke/full 无 runner，因此 max cost 明确为 `PLANNED (not enforced)` |
+| `./harness run check --json` | 串行通过 | format、lint、typecheck、test-unit 全部 passed |
+| `./harness eval smoke --offline --json` | 通过 | 8/8，pass rate 1.0，skipped 0 |
+| `./harness eval full --offline --json` | 通过 | 10/10，pass rate 1.0，skipped 0 |
+| `./harness baseline compare ...` | 通过 | pass-rate delta 0.0，regression 0.0，verdict `unchanged` |
+| `./harness run release-check --json` | 串行通过 | check、integration、full、security 全部 passed |
+| `python3 -m unittest discover -s tests/unit -p '*_test.py' -v` | 通过 | 156 tests；OK |
+
+本次复评 full 报告为 [`evals/reports/full-20260810T042056Z-9d6fc3e4.json`](evals/reports/full-20260810T042056Z-9d6fc3e4.json)，记录 git SHA `33dac33`。
+
+### 11.3 并发执行观察
+
+首次将多个会读写 `evals/reports/` 的命令并行启动时，`check`/`release-check` 中的 unit stage 曾返回失败；随后单独运行 unit、再串行运行 `check` 和 `release-check` 均通过。当前没有足够证据认定为代码确定性缺陷，但这表明多个 harness 进程共享生成报告目录时应避免并发，或后续增加并发隔离/锁机制和对应回归测试。
+
+该观察不影响本次串行门禁结论，但属于可维护性风险；评估报告生成目录应在并发场景下具备进程级隔离能力。
+
+### 11.4 复评最终结论
+
+**当前 `33dac33` 串行质量门禁通过，R1/R3 已验证修复，R2 已从“完全未实现”提升为显式可配置 enforcement；剩余主要限制是本仓库没有真实 provider runner，因此成本 enforcement 和真实 AI 行为仍未在仓库自身评估中生效。**
+
+最新建议：可以合并；接入真实 provider 前，补充 `cost_usd` 端到端超预算阻断测试，并处理评测报告目录的并发隔离问题。

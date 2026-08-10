@@ -775,10 +775,12 @@ def _persist_report(report: EvalReport, *, project_root: Path | None = None) -> 
     payload = report.to_dict()
     text = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True)
     redacted = redact(text)
-    # Atomic write: temp file + rename so an interrupted process leaves
-    # either the previous file intact or the new file complete — never a
-    # half-written JSON.
-    tmp = out.with_suffix(".json.tmp")
+    # Atomic write: PID-scoped temp file + os.replace. The PID suffix
+    # ensures two concurrent processes can never collide on the .tmp
+    # file even if they share the same report directory (which happens
+    # when running `harness run check` and `harness run release-check`
+    # in parallel).
+    tmp = out_dir / f".{os.getpid()}-{report.run_id[:8]}.tmp"
     tmp.write_text(redacted, encoding="utf-8")
     os.replace(tmp, out)
     return out
