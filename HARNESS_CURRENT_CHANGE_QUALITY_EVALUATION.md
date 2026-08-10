@@ -270,3 +270,44 @@ smoke/full 使用仓库内 example dataset 的 fixture output，结果稳定且�
 **当前 `33dac33` 串行质量门禁通过，R1/R3 已验证修复，R2 已从“完全未实现”提升为显式可配置 enforcement；剩余主要限制是本仓库没有真实 provider runner，因此成本 enforcement 和真实 AI 行为仍未在仓库自身评估中生效。**
 
 最新建议：可以合并；接入真实 provider 前，补充 `cost_usd` 端到端超预算阻断测试，并处理评测报告目录的并发隔离问题。
+
+## 12. 第三次复评实测记录（2026-08-10）
+
+> 本节为当前最新复评结果，覆盖第 11 节中关于成本端到端测试和报告并发隔离的后续项。
+
+### 12.1 当前版本
+
+当前 `HEAD=e5f4c70`。评估开始时无代码改动；当前工作树仅包含本次更新的评估文稿。本轮新增提交主题为：`Address §11.3 + §11.4: cost_usd e2e tests + concurrent report isolation`。
+
+### 12.2 命令与证据
+
+| 命令 | 结果 | 证据 |
+|---|---|---|
+| `./harness doctor --json` | 通过 | ruff、pyright、pytest、uv、node 可用；所有声明 command 可解析 |
+| `./harness validate` | 通过（2 条 advisory） | 当前仓库 smoke/full 没有 runner，成本字段明确显示 `PLANNED (not enforced)` |
+| `./harness run check --json` | 通过 | Ruff format、Ruff lint、Pyright、unit tests 全部通过 |
+| `./harness eval smoke --offline --json` | 通过 | 8/8，pass rate 1.0，skipped 0，failed 0 |
+| `./harness eval full --offline --json` | 通过 | 10/10，pass rate 1.0，skipped 0，failed 0 |
+| `./harness baseline compare evals/baselines/latest.json <latest-full>` | 通过 | pass-rate delta 0.0，regression 0.0，verdict `unchanged` |
+| `./harness run release-check --json` | 通过 | check、integration、full、security 全部 passed |
+| `python3 -m unittest discover -s tests -p '*_test.py' -q` | 通过 | 172 tests；OK |
+
+本轮 full 报告为 [`evals/reports/full-20260810T044608Z-4aafedb8.json`](evals/reports/full-20260810T044608Z-4aafedb8.json)，记录当前 SHA `e5f4c70`。
+
+### 12.3 对上一轮遗留项的验证
+
+- 成本控制：新增的 `cost_usd` runner 端到端测试已进入全量测试并通过，证明 enforcement 路径可被触发；当前仓库自身仍没有配置真实 runner，所以 `validate` 保留 advisory 是正确语义。
+- 并发报告：新增并发报告隔离测试已进入全量测试并通过；本轮所有会写 `evals/reports/` 的命令均串行执行，未再出现上一轮的暂时性 unit failure。
+- 门禁覆盖：format、lint、typecheck、unit、integration、offline eval、security 均有本轮通过证据。
+
+### 12.4 第三次复评结论
+
+**当前 `e5f4c70` 的串行质量门禁全部通过，上一轮已识别的 R1、R2、R3 及报告并发隔离问题均已有实现或测试证据。建议评级提升为 A；仍需在真实 provider 接入后补做在线模型行为、真实成本计量和第三方 scanner 的环境级验证。**
+
+本轮文稿验收：
+
+- [x] 重新核对最新 commit 与工作树；
+- [x] 串行执行 doctor、validate、check、smoke、full、baseline compare、release-check；
+- [x] 执行全量 172 tests；
+- [x] 更新最新 full 报告路径、SHA、测试数量和剩余边界；
+- [ ] 未执行真实 model provider eval、真实 gitleaks/pip-audit 下载执行和线上成本计量。
