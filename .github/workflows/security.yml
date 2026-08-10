@@ -67,10 +67,10 @@ jobs:
       - name: Harness built-in security check
         run: ./harness run security
 
-      - name: Install gitleaks (high-risk only)
-        if: needs.detect-risk.outputs.risk == 'high-risk'
+      - name: Install gitleaks (standard + high-risk)
+        if: needs.detect-risk.outputs.risk != 'prototype'
         run: |
-          # Pin to a known-good gitleaks version.
+          # Pin to a known-good gitleaks version for reproducibility.
           GITLEAKS_VERSION=8.21.2
           curl -sSL -o /tmp/gitleaks.tgz \
             "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
@@ -93,7 +93,8 @@ jobs:
                 echo "::notice::gitleaks not installed; prototype risk accepts this."
                 ;;
               standard)
-                echo "::warning::gitleaks not installed; standard risk recommends installing it."
+                echo "::error::gitleaks required for standard+high-risk but install failed."
+                exit 1
                 ;;
               high-risk)
                 echo "::error::gitleaks required for high-risk projects but not installed."
@@ -135,7 +136,8 @@ jobs:
                 echo "::notice::pip-audit not installed; prototype risk accepts this."
                 ;;
               standard)
-                echo "::warning::pip-audit not installed; standard risk recommends installing it."
+                echo "::error::pip-audit required for standard+high-risk but install failed."
+                exit 1
                 ;;
               high-risk)
                 echo "::error::pip-audit required for high-risk but not installed."
