@@ -96,7 +96,8 @@ class WorkflowYamlParityTests(unittest.TestCase):
                         break
                     snippet = self.yml[idx : idx + 200]
                     self.assertIn(
-                        "exit 1", snippet,
+                        "exit 1",
+                        snippet,
                         f"{risk_block.strip()} block missing exit 1",
                     )
                     start = idx + 1

@@ -356,9 +356,7 @@ def _build_evals(raw: Any) -> dict[str, EvalConfig]:
         # enforce_max_cost must be a bool if present.
         enforce_cost = body.get("enforce_max_cost", False)
         if not isinstance(enforce_cost, bool):
-            raise ConfigError(
-                f"[evals.{name}].enforce_max_cost must be a boolean"
-            )
+            raise ConfigError(f"[evals.{name}].enforce_max_cost must be a boolean")
         out[name] = EvalConfig(
             dataset=dataset,
             sample_limit=body.get("sample_limit"),

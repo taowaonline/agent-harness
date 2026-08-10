@@ -93,10 +93,11 @@
   ],
   "dataset": "evals/datasets/regression.example.jsonl",
   "duration_ms": 0,
-  "git_sha": "9b3d25c",
+  "git_sha": "a4ee464",
   "harness_version": "0.1.0",
   "name": "full",
-  "started_at": "2026-08-02T09:33:58Z",
+  "run_id": "db1aa849559f4a8cafb624a17c49afd5",
+  "started_at": "2026-08-10T03:56:32Z",
   "status": "passed",
   "summary": {
     "errors": 0,

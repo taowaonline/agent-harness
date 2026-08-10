@@ -295,12 +295,10 @@ def _cmd_validate(args: argparse.Namespace) -> int:
                 "set enforce_max_cost=true and have the runner emit "
                 "cost_usd per case to make this a hard gate"
                 if ec.runner
-                else "no runner configured; cost tracking requires a runner "
-                "that emits cost_usd"
+                else "no runner configured; cost tracking requires a runner that emits cost_usd"
             )
             warnings.append(
-                f"[evals.{ename}].max_cost_usd={ec.max_cost_usd} is "
-                f"{tag} (not enforced): {hint}"
+                f"[evals.{ename}].max_cost_usd={ec.max_cost_usd} is {tag} (not enforced): {hint}"
             )
         if ec.runner is not None and ec.repetitions and ec.repetitions > 1:
             warnings.append(
