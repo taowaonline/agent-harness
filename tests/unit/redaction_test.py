@@ -71,9 +71,7 @@ class RedactionTests(unittest.TestCase):
         self.assertFalse(is_sensitive_env_var("PATH"))
 
     def test_safe_env_for_logging(self) -> None:
-        out = safe_env_for_logging(
-            {"OPENAI_API_KEY": "sk-live-secret", "PATH": "/usr/bin"}
-        )
+        out = safe_env_for_logging({"OPENAI_API_KEY": "sk-live-secret", "PATH": "/usr/bin"})
         self.assertEqual(out["OPENAI_API_KEY"], "***REDACTED***")
         self.assertEqual(out["PATH"], "/usr/bin")
 
@@ -92,7 +90,8 @@ class RedactionTests(unittest.TestCase):
         ]
         for line in code_lines:
             self.assertEqual(
-                redact(line), line,
+                redact(line),
+                line,
                 f"Source code falsely flagged as secret: {line}",
             )
 
@@ -102,9 +101,9 @@ class RedactionTests(unittest.TestCase):
         fake_long_key = "sk_live_" + "a" * 28
         fake_long_token = "sk_test_" + "b" * 28
         real_leaks = [
-            f'api_key = "{fake_long_key}"',          # quoted
-            f"token: {fake_long_token}",              # 36 alphanumeric
-            'password="abcdef1234567890abcdef"',     # quoted (real)
+            f'api_key = "{fake_long_key}"',  # quoted
+            f"token: {fake_long_token}",  # 36 alphanumeric
+            'password="abcdef1234567890abcdef"',  # quoted (real)
         ]
         for line in real_leaks:
             redacted = redact(line)

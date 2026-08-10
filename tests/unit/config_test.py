@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 import tempfile
 import unittest
@@ -18,7 +17,6 @@ from ai_harness.config import (  # noqa: E402
     ConfigError,
     load_config,
 )
-
 
 VALID_TOML = """
 version = 1
@@ -95,8 +93,7 @@ class ConfigLoadTests(unittest.TestCase):
     def test_unknown_top_level_field_rejected(self) -> None:
         p = _write(
             self.dir,
-            'version = 1\n[project]\nname = "x"\nlanguage = "python"\n'
-            '[mystery]\nfoo = "bar"\n',
+            'version = 1\n[project]\nname = "x"\nlanguage = "python"\n[mystery]\nfoo = "bar"\n',
         )
         with self.assertRaises(ConfigError) as cm:
             load_config(p)
@@ -105,8 +102,7 @@ class ConfigLoadTests(unittest.TestCase):
     def test_unknown_project_field_rejected(self) -> None:
         p = _write(
             self.dir,
-            'version = 1\n[project]\nname = "x"\nlanguage = "python"\n'
-            'mystery = true\n',
+            'version = 1\n[project]\nname = "x"\nlanguage = "python"\nmystery = true\n',
         )
         with self.assertRaises(ConfigError) as cm:
             load_config(p)
@@ -144,8 +140,7 @@ class ConfigLoadTests(unittest.TestCase):
     def test_empty_argv_entry_rejected(self) -> None:
         p = _write(
             self.dir,
-            'version = 1\n[project]\nname = "x"\nlanguage = "python"\n'
-            '[commands]\nlint = [[]]\n',
+            'version = 1\n[project]\nname = "x"\nlanguage = "python"\n[commands]\nlint = [[]]\n',
         )
         with self.assertRaises(ConfigError):
             load_config(p)
@@ -154,8 +149,7 @@ class ConfigLoadTests(unittest.TestCase):
         # typecheck = [] means "configured but no commands" — runner skips it.
         p = _write(
             self.dir,
-            'version = 1\n[project]\nname = "x"\nlanguage = "python"\n'
-            '[commands]\ntypecheck = []\n',
+            'version = 1\n[project]\nname = "x"\nlanguage = "python"\n[commands]\ntypecheck = []\n',
         )
         cfg = load_config(p)
         self.assertEqual(cfg.commands["typecheck"], [])

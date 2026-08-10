@@ -131,8 +131,7 @@ def _build_config(raw: dict[str, Any], source_path: str | None = None) -> Config
     unknown = [k for k in raw if k not in _ALLOWED_TOP]
     if unknown:
         raise ConfigError(
-            f"Unknown top-level fields: {sorted(unknown)}. "
-            f"Allowed: {sorted(_ALLOWED_TOP)}."
+            f"Unknown top-level fields: {sorted(unknown)}. Allowed: {sorted(_ALLOWED_TOP)}."
         )
 
     if "version" not in raw:
@@ -150,16 +149,12 @@ def _build_config(raw: dict[str, Any], source_path: str | None = None) -> Config
     # defaults; the project's own fields override them.
     extends = raw.get("extends", [])
     if extends:
-        if not isinstance(extends, list) or not all(
-            isinstance(x, str) for x in extends
-        ):
+        if not isinstance(extends, list) or not all(isinstance(x, str) for x in extends):
             raise ConfigError(
                 "extends must be a list of profile names like "
                 "['languages.python', 'workloads.rag', 'risk.standard']"
             )
-        base_root = (
-            Path(source_path).parent if source_path else Path.cwd()
-        )
+        base_root = Path(source_path).parent if source_path else Path.cwd()
         raw = _merge_profiles(extends, raw, base_root=base_root)
 
     if "project" not in raw:
@@ -172,9 +167,7 @@ def _build_config(raw: dict[str, Any], source_path: str | None = None) -> Config
         raise ConfigError("[workflows] must be a table")
     for name, seq in workflows.items():
         if not isinstance(seq, list) or not all(isinstance(x, str) for x in seq):
-            raise ConfigError(
-                f"workflow '{name}' must be a list of stage/workflow names"
-            )
+            raise ConfigError(f"workflow '{name}' must be a list of stage/workflow names")
     _detect_cycles(workflows)
 
     evals = _build_evals(raw.get("evals", {}))
@@ -236,9 +229,7 @@ def _load_profile(ref: str, *, base_root: Path) -> dict[str, Any]:
         )
     parts = ref.split(".")
     if len(parts) != 2 or parts[0] not in {"languages", "workloads", "risk"}:
-        raise ConfigError(
-            f"profile ref '{ref}' must start with languages/ workloads/ or risk/"
-        )
+        raise ConfigError(f"profile ref '{ref}' must start with languages/ workloads/ or risk/")
     rel = Path("profiles") / parts[0] / f"{parts[1]}.toml"
     # Try base_root first, then walk up to 5 ancestors.
     candidates = [base_root / rel]
@@ -252,17 +243,11 @@ def _load_profile(ref: str, *, base_root: Path) -> dict[str, Any]:
                 with c.open("rb") as f:
                     return tomllib.load(f)
             except tomllib.TOMLDecodeError as e:
-                raise ConfigError(
-                    f"profile '{ref}' ({c}) has invalid TOML: {e}"
-                ) from e
-    raise ConfigError(
-        f"profile '{ref}' not found (looked for {rel} in {base_root} and ancestors)"
-    )
+                raise ConfigError(f"profile '{ref}' ({c}) has invalid TOML: {e}") from e
+    raise ConfigError(f"profile '{ref}' not found (looked for {rel} in {base_root} and ancestors)")
 
 
-def _deep_merge_profile(
-    base: dict[str, Any], overlay: dict[str, Any]
-) -> dict[str, Any]:
+def _deep_merge_profile(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
     """Deep-merge overlay on top of base. Per-section merge rules.
 
     - Top-level tables ([project], [security]): merge field-by-field.
@@ -305,14 +290,10 @@ def _build_project(raw: Any) -> ProjectInfo:
         raise ConfigError("[project].name must be a non-empty string")
     language = raw.get("language", "other")
     if language not in _ALLOWED_LANGUAGES:
-        raise ConfigError(
-            f"[project].language '{language}' not in {sorted(_ALLOWED_LANGUAGES)}"
-        )
+        raise ConfigError(f"[project].language '{language}' not in {sorted(_ALLOWED_LANGUAGES)}")
     workload = raw.get("workload", "other")
     if workload not in _ALLOWED_WORKLOADS:
-        raise ConfigError(
-            f"[project].workload '{workload}' not in {sorted(_ALLOWED_WORKLOADS)}"
-        )
+        raise ConfigError(f"[project].workload '{workload}' not in {sorted(_ALLOWED_WORKLOADS)}")
     risk = raw.get("risk", "standard")
     if risk not in _ALLOWED_RISKS:
         raise ConfigError(f"[project].risk '{risk}' not in {sorted(_ALLOWED_RISKS)}")
@@ -327,19 +308,13 @@ def _build_commands(raw: Any) -> dict[str, list[list[str]]]:
         # An empty list means "explicitly no commands for this stage" — the
         # runner reports it as `skipped` with reason "not configured".
         if not isinstance(val, list):
-            raise ConfigError(
-                f"[commands].{stage} must be a list of argv arrays"
-            )
+            raise ConfigError(f"[commands].{stage} must be a list of argv arrays")
         compiled: list[list[str]] = []
         for entry in val:
             if not isinstance(entry, list) or not entry:
-                raise ConfigError(
-                    f"[commands].{stage} entry must be a non-empty argv array"
-                )
+                raise ConfigError(f"[commands].{stage} entry must be a non-empty argv array")
             if not all(isinstance(x, str) for x in entry):
-                raise ConfigError(
-                    f"[commands].{stage} argv must contain only strings"
-                )
+                raise ConfigError(f"[commands].{stage} argv must contain only strings")
             compiled.append(list(entry))
         out[stage] = compiled
     return out
@@ -368,13 +343,9 @@ def _build_evals(raw: Any) -> dict[str, EvalConfig]:
         runner = body.get("runner")
         if runner is not None:
             if not isinstance(runner, list) or not runner:
-                raise ConfigError(
-                    f"[evals.{name}].runner must be a non-empty argv array"
-                )
+                raise ConfigError(f"[evals.{name}].runner must be a non-empty argv array")
             if not all(isinstance(x, str) for x in runner):
-                raise ConfigError(
-                    f"[evals.{name}].runner argv must contain only strings"
-                )
+                raise ConfigError(f"[evals.{name}].runner argv must contain only strings")
         out[name] = EvalConfig(
             dataset=dataset,
             sample_limit=body.get("sample_limit"),
@@ -395,25 +366,18 @@ def _build_security(raw: Any) -> SecurityConfig:
     if unknown:
         raise ConfigError(f"[security] unknown fields: {sorted(unknown)}")
     tool_allowlist = raw.get("tool_allowlist", [])
-    if not isinstance(tool_allowlist, list) or not all(
-        isinstance(t, str) for t in tool_allowlist
-    ):
+    if not isinstance(tool_allowlist, list) or not all(isinstance(t, str) for t in tool_allowlist):
         raise ConfigError("[security].tool_allowlist must be a list of strings")
     approval = raw.get("require_approval_for", [])
     if not isinstance(approval, list) or not all(isinstance(a, str) for a in approval):
-        raise ConfigError(
-            "[security].require_approval_for must be a list of strings"
-        )
+        raise ConfigError("[security].require_approval_for must be a list of strings")
     for a in approval:
         if a not in _ALLOWED_APPROVAL:
             raise ConfigError(
-                f"[security].require_approval_for entry '{a}' not in "
-                f"{sorted(_ALLOWED_APPROVAL)}"
+                f"[security].require_approval_for entry '{a}' not in {sorted(_ALLOWED_APPROVAL)}"
             )
     scan_exclude = raw.get("scan_exclude", [])
-    if not isinstance(scan_exclude, list) or not all(
-        isinstance(t, str) for t in scan_exclude
-    ):
+    if not isinstance(scan_exclude, list) or not all(isinstance(t, str) for t in scan_exclude):
         raise ConfigError("[security].scan_exclude must be a list of glob patterns")
     return SecurityConfig(
         redact_inputs=bool(raw.get("redact_inputs", True)),
@@ -435,13 +399,9 @@ def _detect_cycles(workflows: dict[str, list[str]]) -> None:
         color[name] = GREY
         for nxt in workflows[name]:
             if nxt == name:
-                raise ConfigError(
-                    f"workflow '{name}' references itself directly"
-                )
+                raise ConfigError(f"workflow '{name}' references itself directly")
             if color.get(nxt) == GREY:
-                raise ConfigError(
-                    f"cycle detected in workflows: {' -> '.join(stack + [nxt])}"
-                )
+                raise ConfigError(f"cycle detected in workflows: {' -> '.join(stack + [nxt])}")
             if color.get(nxt, BLACK) == WHITE:
                 visit(nxt, stack + [nxt])
         color[name] = BLACK

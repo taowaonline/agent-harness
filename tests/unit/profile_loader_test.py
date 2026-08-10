@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import sys
 import tempfile
 import textwrap
@@ -16,7 +15,6 @@ if str(SRC) not in sys.path:
 
 from ai_harness.config import ConfigError, load_config  # noqa: E402
 
-
 REPO = HERE.parent.parent
 
 
@@ -29,13 +27,16 @@ class ProfileLoaderTests(unittest.TestCase):
         # without restating them.
         with tempfile.TemporaryDirectory() as d:
             d = Path(d)
-            (d / "harness.toml").write_text(textwrap.dedent("""
+            (d / "harness.toml").write_text(
+                textwrap.dedent("""
                 version = 1
                 extends = ["languages.python"]
                 [project]
                 name = "demo"
                 language = "python"
-            """), encoding="utf-8")
+            """),
+                encoding="utf-8",
+            )
             # Need profiles/ reachable — copy from repo
             self._copy_profiles(d)
             cfg = load_config(d / "harness.toml")
@@ -53,7 +54,8 @@ class ProfileLoaderTests(unittest.TestCase):
         # profile's lint stage.
         with tempfile.TemporaryDirectory() as d:
             d = Path(d)
-            (d / "harness.toml").write_text(textwrap.dedent("""
+            (d / "harness.toml").write_text(
+                textwrap.dedent("""
                 version = 1
                 extends = ["languages.python"]
                 [project]
@@ -61,7 +63,9 @@ class ProfileLoaderTests(unittest.TestCase):
                 language = "python"
                 [commands]
                 lint = [["./bin/my-linter"]]
-            """), encoding="utf-8")
+            """),
+                encoding="utf-8",
+            )
             self._copy_profiles(d)
             cfg = load_config(d / "harness.toml")
             # Project's lint wins entirely.
@@ -80,8 +84,7 @@ class ProfileLoaderTests(unittest.TestCase):
             self._copy_profiles(d)
             with self.assertRaises(ConfigError) as cm:
                 load_config(d / "harness.toml")
-            self.assertIn("must start with languages/ workloads/ or risk/",
-                          str(cm.exception))
+            self.assertIn("must start with languages/ workloads/ or risk/", str(cm.exception))
 
     def test_missing_profile_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as d:
@@ -100,7 +103,8 @@ class ProfileLoaderTests(unittest.TestCase):
         # Chain: languages.python + workloads.rag + risk.standard.
         with tempfile.TemporaryDirectory() as d:
             d = Path(d)
-            (d / "harness.toml").write_text(textwrap.dedent("""
+            (d / "harness.toml").write_text(
+                textwrap.dedent("""
                 version = 1
                 extends = ["languages.python", "workloads.rag", "risk.standard"]
                 [project]
@@ -108,10 +112,12 @@ class ProfileLoaderTests(unittest.TestCase):
                 language = "python"
                 workload = "rag"
                 risk = "standard"
-            """), encoding="utf-8")
+            """),
+                encoding="utf-8",
+            )
             self._copy_profiles(d)
             cfg = load_config(d / "harness.toml")
-            self.assertIn("format", cfg.commands)        # from languages
+            self.assertIn("format", cfg.commands)  # from languages
             self.assertTrue(len(cfg.security.tool_allowlist) >= 0)
             self.assertIn("external_write", cfg.security.require_approval_for)
 

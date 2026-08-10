@@ -10,7 +10,7 @@ from __future__ import annotations
 import time
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 SCHEMA_VERSION = 1
@@ -24,7 +24,7 @@ ALL_STATUSES = (STATUS_PASSED, STATUS_FAILED, STATUS_SKIPPED, STATUS_BLOCKED)
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _new_run_id() -> str:
@@ -43,7 +43,7 @@ class StageResult:
     argv: list[str] | None = None
     exit_code: int | None = None
     reason: str | None = None  # why skipped / blocked / failed
-    children: list["StageResult"] = field(default_factory=list)
+    children: list[StageResult] = field(default_factory=list)
     metrics: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

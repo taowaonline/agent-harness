@@ -22,7 +22,6 @@ from pathlib import Path
 from .config import Config
 from .redaction import redact
 from .result import (
-    STATUS_BLOCKED,
     STATUS_FAILED,
     STATUS_PASSED,
     RunResult,
@@ -44,8 +43,8 @@ _SKIP_DIRS = {
     "build",
     "target",
     ".next",
-    "evals/reports",   # generated artifacts; redacted at write time
-    "evals/baselines", # checked-in reports; redacted at write time
+    "evals/reports",  # generated artifacts; redacted at write time
+    "evals/baselines",  # checked-in reports; redacted at write time
 }
 
 # File extensions we read for the secret scan.
@@ -54,21 +53,44 @@ _SKIP_DIRS = {
 # secrets in committed source files (.py, .ts, .go, etc.) are still
 # caught.
 _TEXT_EXT = {
-    ".py", ".ts", ".tsx", ".js", ".jsx", ".go", ".rs", ".java", ".kt",
-    ".cs", ".rb", ".php", ".c", ".cc", ".cpp", ".h", ".hpp", ".swift",
-    ".toml", ".yaml", ".yml", ".json", ".ini", ".cfg", ".conf",
-    ".env", ".sh", ".bash", ".zsh",
-    ".txt", ".sql",
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".kt",
+    ".cs",
+    ".rb",
+    ".php",
+    ".c",
+    ".cc",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".swift",
+    ".toml",
+    ".yaml",
+    ".yml",
+    ".json",
+    ".ini",
+    ".cfg",
+    ".conf",
+    ".env",
+    ".sh",
+    ".bash",
+    ".zsh",
+    ".txt",
+    ".sql",
 }
 
 # Synthetic secret sample used to verify redaction works at all.
 # Constructed at module load so the literal never appears in source —
 # keeps GitHub secret scanning happy while still exercising the regex.
 _STRIPE_TEST_KEY = "sk_test_" + "a" * 28
-_REDACTION_PROBE = (
-    "Authorization: Bearer abcdef.GHIJKLM.nopqrst\n"
-    f"api_key={_STRIPE_TEST_KEY}\n"
-)
+_REDACTION_PROBE = f"Authorization: Bearer abcdef.GHIJKLM.nopqrst\napi_key={_STRIPE_TEST_KEY}\n"
 
 
 def run_security_check(cfg: Config, result: RunResult) -> StageResult:
@@ -94,22 +116,17 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
             )
         else:
             advisory.append(
-                "[policy] tool_allowlist is empty (acceptable for "
-                "non-AI workload 'other')"
+                "[policy] tool_allowlist is empty (acceptable for non-AI workload 'other')"
             )
     if "external_write" not in cfg.security.require_approval_for:
-        findings.append(
-            "[policy] 'external_write' is not in require_approval_for"
-        )
+        findings.append("[policy] 'external_write' is not in require_approval_for")
     if "delete" not in cfg.security.require_approval_for:
         findings.append("[policy] 'delete' is not in require_approval_for")
 
     # 2. Redaction smoke test — confirm the patterns actually fire.
     redacted = redact(_REDACTION_PROBE)
     if "Bearer" in redacted or _STRIPE_TEST_KEY in redacted:
-        findings.append(
-            "[redaction] probe failed — redaction patterns let a secret through"
-        )
+        findings.append("[redaction] probe failed — redaction patterns let a secret through")
 
     # 3. Repo secret scan (best-effort, walks the working tree).
     leaked = _scan_repo_for_secrets(scan_exclude=cfg.security.scan_exclude)
@@ -117,9 +134,7 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
         for hit in leaked[:10]:
             findings.append(f"[secret-scan] {hit}")
         if len(leaked) > 10:
-            findings.append(
-                f"[secret-scan] ...and {len(leaked) - 10} more"
-            )
+            findings.append(f"[secret-scan] ...and {len(leaked) - 10} more")
 
     stage.metrics = {
         "findings_count": len(findings),
@@ -189,10 +204,7 @@ def _scan_repo_for_secrets(scan_exclude: list[str] | None = None) -> list[str]:
                 m = pat.search(line)
                 if not m:
                     continue
-                hits.append(
-                    f"{rel}:{lineno}: pattern "
-                    f"'{pat.pattern[:40]}...' matched"
-                )
+                hits.append(f"{rel}:{lineno}: pattern '{pat.pattern[:40]}...' matched")
                 break
     return hits
 

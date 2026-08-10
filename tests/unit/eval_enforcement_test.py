@@ -27,8 +27,7 @@ from ai_harness.config import (  # noqa: E402
     SecurityConfig,
 )
 from ai_harness.evals import compare_reports, run_eval  # noqa: E402
-from ai_harness.result import STATUS_FAILED, STATUS_PASSED, RunResult  # noqa: E402
-
+from ai_harness.result import STATUS_PASSED, RunResult  # noqa: E402
 
 REPO = HERE.parent.parent
 FAKE = str(REPO / "tests" / "fixtures" / "fake_provider.py")
@@ -53,11 +52,14 @@ class RepetitionsTests(unittest.TestCase):
         # reports repetitions + aggregation mode.
         ds_path = self.dir / "ds.jsonl"
         ds_path.write_text(
-            json.dumps({
-                "id": "p1",
-                "input": {"query": "hello"},
-                "expected": {"contains": ["hello"]},
-            }) + "\n",
+            json.dumps(
+                {
+                    "id": "p1",
+                    "input": {"query": "hello"},
+                    "expected": {"contains": ["hello"]},
+                }
+            )
+            + "\n",
             encoding="utf-8",
         )
         cfg = Config(
@@ -80,19 +82,20 @@ class RepetitionsTests(unittest.TestCase):
         self.assertEqual(stage.status, STATUS_PASSED)
         # Summary records that reps happened and how they were aggregated.
         self.assertEqual(stage.metrics["summary"]["repetitions"], 3)
-        self.assertEqual(
-            stage.metrics["summary"]["aggregation"], "worst_pass_rate"
-        )
+        self.assertEqual(stage.metrics["summary"]["aggregation"], "worst_pass_rate")
 
     def test_repetitions_default_one_has_no_aggregation_field(self) -> None:
         # When repetitions is the default (1), we don't pollute the summary.
         ds_path = self.dir / "ds.jsonl"
         ds_path.write_text(
-            json.dumps({
-                "id": "p1",
-                "input": {"query": "hello"},
-                "expected": {"contains": ["hello"]},
-            }) + "\n",
+            json.dumps(
+                {
+                    "id": "p1",
+                    "input": {"query": "hello"},
+                    "expected": {"contains": ["hello"]},
+                }
+            )
+            + "\n",
             encoding="utf-8",
         )
         cfg = Config(
@@ -124,9 +127,7 @@ class MaxRegressionTests(unittest.TestCase):
 
     def _report(self, pass_rate: float) -> str:
         p = self.dir / f"r-{pass_rate}.json"
-        p.write_text(
-            json.dumps({"summary": {"pass_rate": pass_rate}}), encoding="utf-8"
-        )
+        p.write_text(json.dumps({"summary": {"pass_rate": pass_rate}}), encoding="utf-8")
         return str(p)
 
     def test_small_regression_within_threshold(self) -> None:
@@ -181,19 +182,20 @@ max_cost_usd = 5.0
 """
         (self.dir / "harness.toml").write_text(toml, encoding="utf-8")
         (self.dir / "smoke.jsonl").write_text(
-            json.dumps({
-                "id": "a",
-                "input": {"query": "q"},
-                "expected": {"contains": ["q"]},
-            }) + "\n",
+            json.dumps(
+                {
+                    "id": "a",
+                    "input": {"query": "q"},
+                    "expected": {"contains": ["q"]},
+                }
+            )
+            + "\n",
             encoding="utf-8",
         )
         old = os.getcwd()
         os.chdir(self.dir)
         try:
-            rc_strict, out_strict, err_strict = self._run(
-                "validate", "--strict", "--json"
-            )
+            rc_strict, out_strict, err_strict = self._run("validate", "--strict", "--json")
             rc_plain, out_plain, err_plain = self._run("validate", "--json")
         finally:
             os.chdir(old)
@@ -206,7 +208,8 @@ max_cost_usd = 5.0
         # be "failed" — never "passed" with a non-zero exit.
         strict_data = json.loads(out_strict)
         self.assertEqual(
-            strict_data["status"], "failed",
+            strict_data["status"],
+            "failed",
             f"--strict exit was {rc_strict} but JSON status was "
             f"{strict_data['status']}; they must agree",
         )

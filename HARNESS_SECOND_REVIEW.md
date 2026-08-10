@@ -56,8 +56,7 @@
 
 `cli.py` 注册了 `--strict` flag：
 ```python
-sp.add_argument("--strict", action="store_true",
-                help="Treat warnings as errors.")
+sp.add_argument("--strict", action="store_true", help="Treat warnings as errors.")
 ```
 但 `_cmd_validate` **从不读 `args.strict`**。`grep -n "args.strict" src/ai_harness/cli.py` 返回空。
 
@@ -130,7 +129,7 @@ elif delta["regression"] > 0:
 
 ```python
 safe_started = report.started_at.replace(":", "").replace("-", "")
-fname = f"{report.name}-{safe_started}.json"   # 同秒会撞
+fname = f"{report.name}-{safe_started}.json"  # 同秒会撞
 ```
 
 **修法**（10 行代码）：用 `run_id` 短哈希（已经是 uuid hex）：
@@ -171,6 +170,7 @@ cd /tmp && harness validate --config /path/to/project/harness.toml
 ```python
 # Config 里加 project_root
 self.project_root = Path(source_path).parent
+
 
 # load_dataset 等改用
 def load_dataset(path, project_root=None):

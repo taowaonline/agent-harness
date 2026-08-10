@@ -8,9 +8,11 @@ Register one with:
 ```python
 from ai_harness.evals import register_grader
 
+
 def my_grader(expected, output):
     ...
     return ok, reason
+
 
 register_grader("my_kind", my_grader)
 ```

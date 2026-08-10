@@ -138,7 +138,7 @@ must_not_contain:
 Stripe 官方文档示例 test key（前缀 `sk_test_`，后跟 24 个字母数字字符）会让 push 被 GitHub secret scanning 阻断。修法是在源码里**运行时拼接** secret 字面量，让 prefix 和 body 不出现在同一字符串字面量里：
 
 ```python
-stripe_key = "sk_" + "test_" + "a" * 28   # 拆开 prefix
+stripe_key = "sk_" + "test_" + "a" * 28  # 拆开 prefix
 ```
 
 但这意味着任何**测试 redaction 的代码**都得绕个弯。可考虑加一个 `tests/fixtures/secrets.txt` 显式标记区域，scanner 配置忽略。

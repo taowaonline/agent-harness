@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 import re
-from typing import Iterable
+from collections.abc import Iterable
 
 # Patterns that detect common secret formats. Conservative: redact on match
 # even if the surrounding text is benign — false positives in logs are cheap,

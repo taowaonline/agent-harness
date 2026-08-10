@@ -64,6 +64,7 @@ class WorkflowYamlParityTests(unittest.TestCase):
 
     def setUp(self) -> None:
         from pathlib import Path
+
         repo_root = Path(__file__).resolve().parent.parent.parent
         self.yml = (repo_root / ".github" / "workflows" / "security.yml").read_text()
 
@@ -77,7 +78,7 @@ class WorkflowYamlParityTests(unittest.TestCase):
         self.assertIn("high-risk)", self.yml)
         # Verify the high-risk case has exit 1 nearby.
         idx = self.yml.index("high-risk)")
-        snippet = self.yml[idx:idx + 400]
+        snippet = self.yml[idx : idx + 400]
         self.assertIn("exit 1", snippet)
 
 

@@ -25,7 +25,6 @@ from ai_harness.config import (  # noqa: E402
     SecurityConfig,
 )
 from ai_harness.result import (  # noqa: E402
-    STATUS_BLOCKED,
     STATUS_FAILED,
     STATUS_PASSED,
     STATUS_SKIPPED,

@@ -7,7 +7,6 @@ interface — never required by the unit or integration tests.
 
 from __future__ import annotations
 
-import io
 import json
 import os
 import re
@@ -15,9 +14,10 @@ import shutil
 import statistics
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .config import Config, EvalConfig
 from .redaction import redact
@@ -29,7 +29,6 @@ from .result import (
     RunResult,
     StageResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # Dataset model
@@ -108,14 +107,10 @@ def load_dataset(path: str | Path, *, project_root: Path | None = None) -> list[
             try:
                 rec = json.loads(line)
             except json.JSONDecodeError as e:
-                raise DatasetError(
-                    f"{path}:{lineno}: invalid JSON ({e.msg})"
-                ) from e
+                raise DatasetError(f"{path}:{lineno}: invalid JSON ({e.msg})") from e
             case = _build_case(rec, path, lineno)
             if case.id in seen_ids:
-                raise DatasetError(
-                    f"{path}:{lineno}: duplicate case id '{case.id}'"
-                )
+                raise DatasetError(f"{path}:{lineno}: duplicate case id '{case.id}'")
             seen_ids.add(case.id)
             cases.append(case)
     if not cases:
@@ -128,9 +123,7 @@ def _build_case(rec: Any, path: str | Path, lineno: int) -> EvalCase:
         raise DatasetError(f"{path}:{lineno}: each record must be a JSON object")
     for required in ("id", "input", "expected"):
         if required not in rec:
-            raise DatasetError(
-                f"{path}:{lineno}: missing required field '{required}'"
-            )
+            raise DatasetError(f"{path}:{lineno}: missing required field '{required}'")
     cid = rec["id"]
     if not isinstance(cid, str) or not cid:
         raise DatasetError(f"{path}:{lineno}: 'id' must be a non-empty string")
@@ -185,9 +178,7 @@ def grader_contains(expected: dict[str, Any], output: dict[str, Any]) -> GraderR
     return ok, "" if ok else f"missing required substring {needle!r}"
 
 
-def grader_not_contains(
-    expected: dict[str, Any], output: dict[str, Any]
-) -> GraderResult:
+def grader_not_contains(expected: dict[str, Any], output: dict[str, Any]) -> GraderResult:
     forbidden = expected.get("needle") or expected.get("value")
     if not isinstance(forbidden, str):
         return False, "not_contains grader requires 'needle'"
@@ -213,9 +204,7 @@ def grader_regex(expected: dict[str, Any], output: dict[str, Any]) -> GraderResu
     return ok, "" if ok else f"pattern {pattern!r} did not match"
 
 
-def grader_json_parse(
-    expected: dict[str, Any], output: dict[str, Any]
-) -> GraderResult:
+def grader_json_parse(expected: dict[str, Any], output: dict[str, Any]) -> GraderResult:
     raw = output.get("answer") or output.get("text") or ""
     if not isinstance(raw, str):
         raw = json.dumps(raw, ensure_ascii=False)
@@ -226,9 +215,7 @@ def grader_json_parse(
     return True, ""
 
 
-def grader_json_field(
-    expected: dict[str, Any], output: dict[str, Any]
-) -> GraderResult:
+def grader_json_field(expected: dict[str, Any], output: dict[str, Any]) -> GraderResult:
     field = expected.get("field")
     want = expected.get("equals")
     if not isinstance(field, str):
@@ -251,9 +238,7 @@ def grader_json_field(
     return ok, "" if ok else f"field '{field}': expected {want!r}, got {parsed[field]!r}"
 
 
-def grader_tool_call(
-    expected: dict[str, Any], output: dict[str, Any]
-) -> GraderResult:
+def grader_tool_call(expected: dict[str, Any], output: dict[str, Any]) -> GraderResult:
     want_name = expected.get("tool")
     calls = output.get("tool_calls") or []
     if not isinstance(calls, list):
@@ -271,16 +256,13 @@ def grader_tool_call(
             for k, v in want_args.items():
                 if got_args.get(k) != v:
                     return False, (
-                        f"tool {want_name}: arg '{k}' expected {v!r}, "
-                        f"got {got_args.get(k)!r}"
+                        f"tool {want_name}: arg '{k}' expected {v!r}, got {got_args.get(k)!r}"
                     )
             return True, ""
     return False, f"expected tool '{want_name}' was not called"
 
 
-def grader_threshold(
-    expected: dict[str, Any], output: dict[str, Any]
-) -> GraderResult:
+def grader_threshold(expected: dict[str, Any], output: dict[str, Any]) -> GraderResult:
     metric = expected.get("metric")
     limit = expected.get("max")
     if metric is None or limit is None:
@@ -361,9 +343,7 @@ def _invoke_subprocess_runner(
     exe = argv[0]
     resolved = shutil.which(exe)
     if resolved is None and not os.path.isabs(exe):
-        raise _RunnerError(
-            f"runner executable '{exe}' not found on PATH"
-        )
+        raise _RunnerError(f"runner executable '{exe}' not found on PATH")
     # Build stdin payload.
     stdin_lines: list[str] = []
     expected_ids: list[str] = []
@@ -393,17 +373,13 @@ def _invoke_subprocess_runner(
             check=False,
         )
     except subprocess.TimeoutExpired as e:
-        raise _RunnerError(
-            f"runner timed out after {timeout}s ({len(cases)} cases)"
-        ) from e
+        raise _RunnerError(f"runner timed out after {timeout}s ({len(cases)} cases)") from e
     except FileNotFoundError as e:
         raise _RunnerError(f"runner executable vanished at exec time: {e}") from e
     # Redact stderr before storing it anywhere.
     stderr_redacted = redact(proc.stderr or "")
     if proc.returncode != 0:
-        raise _RunnerError(
-            f"runner exited {proc.returncode}; stderr: {stderr_redacted[:500]}"
-        )
+        raise _RunnerError(f"runner exited {proc.returncode}; stderr: {stderr_redacted[:500]}")
     # Parse stdout. The runner must emit one JSON object per line, in the
     # same order as the cases were sent, with `case_id` matching the input.
     stdout_lines = [ln for ln in (proc.stdout or "").splitlines() if ln.strip()]
@@ -413,8 +389,9 @@ def _invoke_subprocess_runner(
             f"{len(cases)} input cases (line-count mismatch)"
         )
     outputs: dict[str, dict[str, Any]] = {}
-    for expected_id, line in zip(expected_ids, stdout_lines):
+    for expected_id, line in zip(expected_ids, stdout_lines, strict=False):
         # Per-line malformed JSON is a contract violation, not a soft skip.
+        # `strict=False` because we already check len() equality above.
         try:
             rec = json.loads(line)
         except json.JSONDecodeError as e:
@@ -423,14 +400,11 @@ def _invoke_subprocess_runner(
                 f"{e.msg}; line: {line[:200]}"
             ) from e
         if not isinstance(rec, dict):
-            raise _RunnerError(
-                f"runner result for case '{expected_id}' is not a JSON object"
-            )
+            raise _RunnerError(f"runner result for case '{expected_id}' is not a JSON object")
         got_id = rec.get("case_id")
         if not isinstance(got_id, str) or not got_id:
             raise _RunnerError(
-                f"runner result for case '{expected_id}' missing string "
-                f"'case_id' field"
+                f"runner result for case '{expected_id}' missing string 'case_id' field"
             )
         # Positional + value check: the runner must emit results in the
         # same order as the cases were sent, and case_id must match the
@@ -455,7 +429,7 @@ def run_eval(
     result: RunResult,
     *,
     offline: bool,
-    provider: "ModelProvider | None" = None,
+    provider: ModelProvider | None = None,
 ) -> StageResult:
     """Run an eval (smoke or full). Offline-only by default.
 
@@ -467,9 +441,7 @@ def run_eval(
     if name not in cfg.evals:
         msg = f"eval '{name}' is not configured"
         result.add_error(msg)
-        return StageResult(
-            name=name, kind="eval", status=STATUS_SKIPPED, reason=msg
-        )
+        return StageResult(name=name, kind="eval", status=STATUS_SKIPPED, reason=msg)
     ec = cfg.evals[name]
     started_at = _now_iso()
     started = time.monotonic()
@@ -478,7 +450,10 @@ def run_eval(
     except DatasetError as e:
         result.add_error(str(e))
         return StageResult(
-            name=name, kind="eval", status=STATUS_FAILED, reason=str(e),
+            name=name,
+            kind="eval",
+            status=STATUS_FAILED,
+            reason=str(e),
             started_at=started_at,
             duration_ms=int((time.monotonic() - started) * 1000),
         )
@@ -500,7 +475,9 @@ def run_eval(
             except _RunnerError as e:
                 result.add_error(f"runner: {e}")
                 return StageResult(
-                    name=name, kind="eval", status=STATUS_FAILED,
+                    name=name,
+                    kind="eval",
+                    status=STATUS_FAILED,
                     reason=f"runner failed: {e}",
                     started_at=started_at,
                     duration_ms=int((time.monotonic() - started) * 1000),
@@ -509,17 +486,17 @@ def run_eval(
         for case in cases:
             case_results.append(
                 _grade_case(
-                case, ec,
-                offline=offline,
-                provider=provider,
-                runner_output=runner_outputs.get(case.id),
+                    case,
+                    ec,
+                    offline=offline,
+                    provider=provider,
+                    runner_output=runner_outputs.get(case.id),
+                )
             )
-        )
         summary = _summarize(case_results)
         # Track worst-case across repetitions.
-        if (
-            worst_summary is None
-            or summary.get("pass_rate", 0.0) < worst_summary.get("pass_rate", 1.0)
+        if worst_summary is None or summary.get("pass_rate", 0.0) < worst_summary.get(
+            "pass_rate", 1.0
         ):
             worst_summary = summary
             final_case_results = case_results
@@ -568,7 +545,7 @@ def _grade_case(
     ec: EvalConfig,
     *,
     offline: bool,
-    provider: "ModelProvider | None",
+    provider: ModelProvider | None,
     runner_output: dict[str, Any] | None = None,
 ) -> CaseResult:
     started = time.monotonic()
@@ -645,7 +622,9 @@ def _grade_case(
             duration_ms=duration_ms,
         )
     return CaseResult(
-        case_id=case.id, status="passed", duration_ms=duration_ms,
+        case_id=case.id,
+        status="passed",
+        duration_ms=duration_ms,
     )
 
 
@@ -717,7 +696,7 @@ def _redact_case_dict(c: CaseResult) -> dict[str, Any]:
 def _now_iso() -> str:
     import datetime as _dt
 
-    return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return _dt.datetime.now(_dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _harness_version() -> str:

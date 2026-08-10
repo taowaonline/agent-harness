@@ -13,7 +13,6 @@ if str(SRC) not in sys.path:
 
 from ai_harness.config import ConfigError, load_config  # noqa: E402
 
-
 REPO = HERE.parent.parent
 
 

@@ -13,7 +13,6 @@ if str(SRC) not in sys.path:
 
 from ai_harness.config import (  # noqa: E402
     Config,
-    EvalConfig,
     ProjectInfo,
     SecurityConfig,
 )
@@ -51,11 +50,7 @@ class RunStageTests(unittest.TestCase):
         marker = "/tmp/ai_harness_runner_dryrun_marker"
         if Path(marker).exists():
             Path(marker).unlink()
-        cfg = _cfg(
-            commands={
-                "touch": [["python3", "-c", f"open('{marker}','w').close()"]]
-            }
-        )
+        cfg = _cfg(commands={"touch": [["python3", "-c", f"open('{marker}','w').close()"]]})
         result = RunResult(command="run")
         run_target(
             cfg,
@@ -76,11 +71,7 @@ class RunStageTests(unittest.TestCase):
         self.assertEqual(result.stages[0].status, STATUS_PASSED)
 
     def test_real_run_failure_propagates(self) -> None:
-        cfg = _cfg(
-            commands={
-                "fail": [["python3", "-c", "import sys; sys.exit(7)"]]
-            }
-        )
+        cfg = _cfg(commands={"fail": [["python3", "-c", "import sys; sys.exit(7)"]]})
         result = RunResult(command="run")
         run_target(cfg, RunRequest(name="fail"), result)
         self.assertEqual(result.status, STATUS_FAILED)
@@ -97,9 +88,7 @@ class RunStageTests(unittest.TestCase):
         self.assertTrue(any("Unknown target" in e for e in result.errors))
 
     def test_optional_stage_with_missing_executable_skips(self) -> None:
-        cfg = _cfg(
-            commands={"typecheck": [["this-binary-does-not-exist-anywhere"]]}
-        )
+        cfg = _cfg(commands={"typecheck": [["this-binary-does-not-exist-anywhere"]]})
         result = RunResult(command="run")
         run_target(cfg, RunRequest(name="typecheck"), result)
         # 'typecheck' is in the optional allowlist; missing binary => skipped.
@@ -108,9 +97,7 @@ class RunStageTests(unittest.TestCase):
         self.assertEqual(result.status, STATUS_SKIPPED)
 
     def test_required_stage_with_missing_executable_fails(self) -> None:
-        cfg = _cfg(
-            commands={"lint": [["this-binary-does-not-exist-anywhere"]]}
-        )
+        cfg = _cfg(commands={"lint": [["this-binary-does-not-exist-anywhere"]]})
         result = RunResult(command="run")
         run_target(cfg, RunRequest(name="lint"), result)
         self.assertEqual(result.stages[0].status, STATUS_FAILED)
@@ -127,6 +114,7 @@ class RunStageTests(unittest.TestCase):
 class RunWorkflowTests(unittest.TestCase):
     def test_workflow_runs_in_order_and_fails_fast(self) -> None:
         order: list[str] = []
+
         # The 'first' stage succeeds; 'second' fails. Workflow should not run
         # 'third'. We append to `order` only when the subprocess actually
         # starts, by passing the marker through the python command line.
@@ -187,9 +175,7 @@ class RunWorkflowTests(unittest.TestCase):
         if Path(marker).exists():
             Path(marker).unlink()
         cfg = _cfg(
-            commands={
-                "touch": [["python3", "-c", f"open('{marker}','w').close()"]]
-            },
+            commands={"touch": [["python3", "-c", f"open('{marker}','w').close()"]]},
             workflows={"check": ["touch"]},
         )
         result = RunResult(command="run")
@@ -228,13 +214,13 @@ class SubprocessErrorTests(unittest.TestCase):
         self.assertEqual(code, 124)
 
     def test_executable_disappears_returns_127(self) -> None:
-        from ai_harness.runner import _exec_one
-
         # Race-free: simulate the executable vanishing between `which` and
         # exec by passing an argv whose first element resolves to None at
         # exec time. We use a path that exists for `which` but rename it.
         import os
         import tempfile
+
+        from ai_harness.runner import _exec_one
 
         with tempfile.TemporaryDirectory() as d:
             fake = os.path.join(d, "fake-tool")

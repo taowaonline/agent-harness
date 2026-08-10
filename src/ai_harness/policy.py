@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 from .config import SecurityConfig
-
 
 # Coarse exit codes are part of the contract — do not renumber.
 EXIT_SUCCESS = 0
@@ -15,7 +14,7 @@ EXIT_STAGE_FAILED = 2
 EXIT_POLICY_BLOCKED = 3
 EXIT_INTERNAL = 4
 EXIT_SKIPPED = 10  # all-or-partial skipped without --allow-skipped
-EXIT_USAGE = 64    # arg parsing / usage error
+EXIT_USAGE = 64  # arg parsing / usage error
 
 
 class PolicyError(Exception):
@@ -41,9 +40,7 @@ def check_tool_allowed(tool: str, security: SecurityConfig) -> PolicyDecision:
     return PolicyDecision(allowed=True)
 
 
-def check_write_requires_approval(
-    action_kind: str, security: SecurityConfig
-) -> PolicyDecision:
+def check_write_requires_approval(action_kind: str, security: SecurityConfig) -> PolicyDecision:
     """Return whether the given high-risk write kind needs human approval."""
     if action_kind in security.require_approval_for:
         return PolicyDecision(

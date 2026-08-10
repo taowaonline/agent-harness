@@ -19,7 +19,6 @@ from ai_harness.config import (  # noqa: E402
     SecurityConfig,
 )
 from ai_harness.policy import (  # noqa: E402
-    PolicyDecision,
     check_tool_allowed,
     check_write_requires_approval,
 )

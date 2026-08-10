@@ -25,12 +25,11 @@ from ai_harness.config import (  # noqa: E402
     SecurityConfig,
 )
 from ai_harness.evals import (  # noqa: E402
-    _RunnerError,
     _invoke_subprocess_runner,
+    _RunnerError,
     run_eval,
 )
 from ai_harness.result import STATUS_FAILED, STATUS_PASSED, RunResult  # noqa: E402
-
 
 REPO = HERE.parent.parent
 FAKE = str(REPO / "tests" / "fixtures" / "fake_provider.py")
@@ -83,7 +82,7 @@ class RunnerProtocolUnitTests(unittest.TestCase):
         result = RunResult(command="eval")
         outputs = _invoke_subprocess_runner(ec, self._make_cases(2), result)
         self.assertEqual(set(outputs.keys()), {"c0", "c1"})
-        for cid, out in outputs.items():
+        for _cid, out in outputs.items():
             self.assertIn("answer", out)
 
     def test_runner_nonzero_exit_raises(self) -> None:
@@ -143,12 +142,24 @@ class RunnerIntegrationTests(unittest.TestCase):
         # Two cases: one whose query contains the needle (pass), one that
         # does not (fail). Pass rate = 0.5, threshold 0.5 → status PASSED.
         cfg = self._cfg_with_runner(
-            "\n".join([
-                json.dumps({"id": "p1", "input": {"query": "hello world"},
-                            "expected": {"contains": ["hello"]}}),
-                json.dumps({"id": "f1", "input": {"query": "goodbye"},
-                            "expected": {"contains": ["missing"]}}),
-            ]),
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "id": "p1",
+                            "input": {"query": "hello world"},
+                            "expected": {"contains": ["hello"]},
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "id": "f1",
+                            "input": {"query": "goodbye"},
+                            "expected": {"contains": ["missing"]},
+                        }
+                    ),
+                ]
+            ),
             runner=["python3", FAKE],
         )
         result = RunResult(command="eval")
@@ -160,8 +171,7 @@ class RunnerIntegrationTests(unittest.TestCase):
 
     def test_run_eval_with_failing_runner_returns_failed(self) -> None:
         cfg = self._cfg_with_runner(
-            json.dumps({"id": "x", "input": {"query": "y"},
-                        "expected": {"contains": ["y"]}}),
+            json.dumps({"id": "x", "input": {"query": "y"}, "expected": {"contains": ["y"]}}),
             runner=["python3", FAKE, "--fail"],
         )
         result = RunResult(command="eval")

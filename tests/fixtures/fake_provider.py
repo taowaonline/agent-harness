@@ -32,6 +32,7 @@ def main() -> int:
     if "--slow" in sys.argv:
         # Sleep past any reasonable per-case timeout to test timeout path.
         import time
+
         time.sleep(60)
 
     for line in sys.stdin:
@@ -43,8 +44,7 @@ def main() -> int:
         except json.JSONDecodeError:
             # Mirror a malformed input — write back an error result.
             sys.stdout.write(
-                json.dumps({"case_id": "?", "output": {}, "error": "bad input"})
-                + "\n"
+                json.dumps({"case_id": "?", "output": {}, "error": "bad input"}) + "\n"
             )
             sys.stdout.flush()
             continue

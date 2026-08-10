@@ -28,7 +28,6 @@ from ai_harness.policy import (  # noqa: E402
     EXIT_VALIDATION,
 )
 
-
 HARNESS_TOML = """
 version = 1
 
@@ -105,9 +104,7 @@ class CLIIntegrationTests(unittest.TestCase):
     def test_run_check_dry_run(self) -> None:
         # Dry-run is honest: top status is SKIPPED, not PASSED.
         # Use --allow-skipped to opt into exit 0 for dry-runs.
-        rc, out, err = self._run(
-            "run", "check", "--dry-run", "--allow-skipped", "--json"
-        )
+        rc, out, err = self._run("run", "check", "--dry-run", "--allow-skipped", "--json")
         self.assertEqual(rc, EXIT_SUCCESS, err + out)
         data = json.loads(out)
         self.assertEqual(data["status"], "skipped")
@@ -159,18 +156,14 @@ class CLIIntegrationTests(unittest.TestCase):
         self.assertEqual(data["status"], "passed")
         eval_stage = data["stages"][0]
         self.assertEqual(eval_stage["kind"], "eval")
-        self.assertGreaterEqual(
-            eval_stage["metrics"]["summary"]["pass_rate"], 0.9
-        )
+        self.assertGreaterEqual(eval_stage["metrics"]["summary"]["pass_rate"], 0.9)
 
     def test_baseline_compare(self) -> None:
         # Generate two reports via offline eval, then compare them.
         self._run("eval", "smoke", "--offline", "--json")
         reports = sorted((self.dir / "evals" / "reports").glob("*.json"))
         self.assertEqual(len(reports), 1)
-        rc, out, err = self._run(
-            "baseline", "compare", str(reports[0]), str(reports[0]), "--json"
-        )
+        rc, out, err = self._run("baseline", "compare", str(reports[0]), str(reports[0]), "--json")
         self.assertEqual(rc, EXIT_SUCCESS, err + out)
         data = json.loads(out)
         self.assertEqual(data["summary"]["comparison"]["verdict"], "unchanged")

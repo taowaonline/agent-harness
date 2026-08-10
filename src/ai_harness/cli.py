@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import json
 import shutil
-import subprocess
 import sys
 from dataclasses import asdict
 from pathlib import Path
@@ -83,8 +82,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("validate", help="Validate harness config and datasets.")
     sp.add_argument("--config", default=DEFAULT_CONFIG_PATH)
     sp.add_argument("--json", action="store_true", dest="json_output")
-    sp.add_argument("--strict", action="store_true",
-                    help="Treat warnings as errors.")
+    sp.add_argument("--strict", action="store_true", help="Treat warnings as errors.")
 
     sp = sub.add_parser("list", help="List stages, workflows, and config sources.")
     sp.add_argument("--config", default=DEFAULT_CONFIG_PATH)
@@ -98,16 +96,17 @@ def _build_parser() -> argparse.ArgumentParser:
         "--allow-skipped",
         action="store_true",
         help="Exit 0 even if the result contains skipped stages. "
-             "Default is exit 10 so partial skips are not silently "
-             "treated as success.",
+        "Default is exit 10 so partial skips are not silently "
+        "treated as success.",
     )
     sp.add_argument("--json", action="store_true", dest="json_output")
 
     sp = sub.add_parser("eval", help="Run an offline or online eval.")
     sp.add_argument("kind", choices=["smoke", "full"])
     sp.add_argument("--config", default=DEFAULT_CONFIG_PATH)
-    sp.add_argument("--offline", action="store_true",
-                    help="Only use fixture outputs; never call a model.")
+    sp.add_argument(
+        "--offline", action="store_true", help="Only use fixture outputs; never call a model."
+    )
     sp.add_argument(
         "--allow-skipped",
         action="store_true",
@@ -117,8 +116,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
     sp = sub.add_parser("baseline", help="Baseline report tooling.")
     sp_b = sp.add_subparsers(dest="baseline_cmd", required=True)
-    sp_c = sp_b.add_parser("compare",
-                           help="Compare two eval reports by pass rate.")
+    sp_c = sp_b.add_parser("compare", help="Compare two eval reports by pass rate.")
     sp_c.add_argument("a")
     sp_c.add_argument("b")
     sp_c.add_argument(
@@ -126,8 +124,8 @@ def _build_parser() -> argparse.ArgumentParser:
         type=float,
         default=None,
         help="Allowed regression in [0,1]. If set and the regression is at "
-             "or below this value, verdict is 'within_threshold' rather "
-             "than 'regressed'. Reads [evals.*].max_regression by default.",
+        "or below this value, verdict is 'within_threshold' rather "
+        "than 'regressed'. Reads [evals.*].max_regression by default.",
     )
     sp_c.add_argument(
         "--eval-kind",
@@ -145,23 +143,26 @@ def _build_parser() -> argparse.ArgumentParser:
         "init",
         help="Bootstrap a harness setup in the current directory.",
     )
-    sp.add_argument("--language", default="python",
-                    choices=["python", "typescript", "go", "rust", "jvm", "dotnet", "other"])
-    sp.add_argument("--workload", default="other",
-                    choices=["chat", "rag", "agent", "extraction", "code-agent", "other"])
-    sp.add_argument("--risk", default="standard",
-                    choices=["prototype", "standard", "high-risk"])
-    sp.add_argument("--name", default="",
-                    help="Project name (defaults to current directory name).")
-    sp.add_argument("--force", action="store_true",
-                    help="Overwrite an existing harness.toml.")
+    sp.add_argument(
+        "--language",
+        default="python",
+        choices=["python", "typescript", "go", "rust", "jvm", "dotnet", "other"],
+    )
+    sp.add_argument(
+        "--workload",
+        default="other",
+        choices=["chat", "rag", "agent", "extraction", "code-agent", "other"],
+    )
+    sp.add_argument("--risk", default="standard", choices=["prototype", "standard", "high-risk"])
+    sp.add_argument("--name", default="", help="Project name (defaults to current directory name).")
+    sp.add_argument("--force", action="store_true", help="Overwrite an existing harness.toml.")
     sp.add_argument(
         "--vendor",
         action="store_true",
         help="Vendor src/ai_harness/ alongside the executable so the project "
-             "is self-contained. Default is the 'global install' model: the "
-             "project only stores harness.toml, and contributors install the "
-             "harness CLI globally (see README).",
+        "is self-contained. Default is the 'global install' model: the "
+        "project only stores harness.toml, and contributors install the "
+        "harness CLI globally (see README).",
     )
     sp.add_argument("--json", action="store_true", dest="json_output")
 
@@ -223,11 +224,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         for stage, arrays in cfg.commands.items():
             declared[stage] = {
                 "executables": sorted({a[0] for a in arrays if a}),
-                "available": all(
-                    shutil.which(a[0]) is not None
-                    for a in arrays
-                    if a
-                ),
+                "available": all(shutil.which(a[0]) is not None for a in arrays if a),
             }
         result.summary["declared_commands"] = declared
 
@@ -251,9 +248,7 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         result.summary["evals"] = evals
 
     result.status = (
-        STATUS_PASSED
-        if cfg_status == STATUS_PASSED and all(tools.values())
-        else STATUS_FAILED
+        STATUS_PASSED if cfg_status == STATUS_PASSED and all(tools.values()) else STATUS_FAILED
     )
     return _emit(result, args.json_output)
 
@@ -273,9 +268,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     for stage, arrays in cfg.commands.items():
         for argv in arrays:
             if not argv or not argv[0]:
-                result.add_error(
-                    f"[commands].{stage} contains an empty argv"
-                )
+                result.add_error(f"[commands].{stage} contains an empty argv")
     # Validate datasets.
     for ename, ec in cfg.evals.items():
         try:
@@ -285,17 +278,11 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     # Check workflows reference known stages, workflows, or built-ins.
     from .runner import BUILTIN_STAGES
 
-    known = (
-        set(cfg.commands.keys())
-        | set(cfg.workflows.keys())
-        | BUILTIN_STAGES
-    )
+    known = set(cfg.commands.keys()) | set(cfg.workflows.keys()) | BUILTIN_STAGES
     for wfname, seq in cfg.workflows.items():
         for ref in seq:
             if ref not in known:
-                result.add_error(
-                    f"workflow '{wfname}' references unknown '{ref}'"
-                )
+                result.add_error(f"workflow '{wfname}' references unknown '{ref}'")
     # Soft warnings: fields parsed but not enforced, or other advisory issues.
     # NOTE on max_cost_usd: this field is "planned", not "enforced". The
     # harness has no provider price table; the field is parsed, displayed
@@ -330,11 +317,7 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     }
     if warnings:
         result.summary["warnings"] = warnings
-        sys.stderr.write(
-            "warnings (use --strict to fail):\n  - "
-            + "\n  - ".join(warnings)
-            + "\n"
-        )
+        sys.stderr.write("warnings (use --strict to fail):\n  - " + "\n  - ".join(warnings) + "\n")
         if args.strict:
             # The status must honestly reflect what happened: warnings are
             # surfaced, --strict escalates them to a failure. The JSON
@@ -431,9 +414,7 @@ def _cmd_explain(args: argparse.Namespace) -> int:
     text = explanations.get(topic)
     if text is None:
         # Try fuzzy match on stage names.
-        sys.stderr.write(
-            f"unknown topic '{topic}'. Known: {sorted(explanations)}\n"
-        )
+        sys.stderr.write(f"unknown topic '{topic}'. Known: {sorted(explanations)}\n")
         return EXIT_USAGE
     sys.stdout.write(text + "\n")
     return EXIT_SUCCESS
@@ -512,9 +493,7 @@ def _cmd_init(args: argparse.Namespace) -> int:
                 f"(self-contained: works without HARNESS_HOME)"
             )
         else:
-            result.add_error(
-                f"--vendor requested but source package not found at {src_pkg}"
-            )
+            result.add_error(f"--vendor requested but source package not found at {src_pkg}")
 
     # 2. Generate harness.toml from the closest example, or fall back to a
     #    synthesized config from language + workload + risk.
@@ -557,12 +536,8 @@ def _cmd_init(args: argparse.Namespace) -> int:
     #    out of the box. The user is expected to replace it.
     smoke_path = cwd / "evals/datasets/smoke.example.jsonl"
     if not smoke_path.exists():
-        smoke_path.write_text(
-            _INIT_SMOKE_DATASET, encoding="utf-8"
-        )
-        actions.append(
-            f"seeded {smoke_path} (replace with your real samples)"
-        )
+        smoke_path.write_text(_INIT_SMOKE_DATASET, encoding="utf-8")
+        actions.append(f"seeded {smoke_path} (replace with your real samples)")
 
     # 4b. Copy any *other* example datasets referenced by the chosen
     #     template (e.g. regression.example.jsonl) so validate + eval full
@@ -605,7 +580,7 @@ def _cmd_init(args: argparse.Namespace) -> int:
         "./harness works without HARNESS_HOME."
         if args.vendor
         else "Install the harness CLI globally (see tom_harness README) or "
-             "set HARNESS_HOME; the ./harness entry alone is not self-contained."
+        "set HARNESS_HOME; the ./harness entry alone is not self-contained."
     )
     result.summary["next_steps"] = [
         "Edit harness.toml: name, dataset paths, [commands] for your tools.",
@@ -716,9 +691,7 @@ _LANG_COMMANDS: dict[str, dict[str, list[list[str]]]] = {
 }
 
 
-def _render_init_toml(
-    *, name: str, language: str, workload: str, risk: str, home: Path
-) -> str:
+def _render_init_toml(*, name: str, language: str, workload: str, risk: str, home: Path) -> str:
     """Prefer an exact example/<lang>-<workload>/ template; else synthesize."""
     example = _find_example_for(language=language, workload=workload, home=home)
     if example is not None:
@@ -744,44 +717,41 @@ def _render_init_toml(
     if cmds:
         lines.append("[commands]")
         for stage, argv_arrays in cmds.items():
-            argv_reprs = [
-                "[" + ", ".join(f'"{a}"' for a in argv) + "]"
-                for argv in argv_arrays
-            ]
+            argv_reprs = ["[" + ", ".join(f'"{a}"' for a in argv) + "]" for argv in argv_arrays]
             if len(argv_reprs) == 1:
                 lines.append(f"{stage} = [{argv_reprs[0]}]")
             else:
                 lines.append(f"{stage} = [{', '.join(argv_reprs)}]")
         lines.append("")
-    lines.extend([
-        "[workflows]",
-        'check = ["format", "lint", "typecheck", "test-unit"]',
-        'release-check = ["check", "test-integration", "eval-full", "security"]',
-        "",
-        "[evals.smoke]",
-        'dataset = "evals/datasets/smoke.example.jsonl"',
-        "sample_limit = 20",
-        "min_pass_rate = 0.90",
-        "",
-        "[evals.full]",
-        'dataset = "evals/datasets/smoke.example.jsonl"',
-        "repetitions = 1",
-        "min_pass_rate = 0.95",
-        "max_regression = 0.02",
-        "",
-        "[security]",
-        "redact_inputs = true",
-        "redact_outputs = true",
-        'tool_allowlist = ["retrieve"]',
-        'require_approval_for = ["external_write", "delete", "payment", "deploy"]',
-        "",
-    ])
+    lines.extend(
+        [
+            "[workflows]",
+            'check = ["format", "lint", "typecheck", "test-unit"]',
+            'release-check = ["check", "test-integration", "eval-full", "security"]',
+            "",
+            "[evals.smoke]",
+            'dataset = "evals/datasets/smoke.example.jsonl"',
+            "sample_limit = 20",
+            "min_pass_rate = 0.90",
+            "",
+            "[evals.full]",
+            'dataset = "evals/datasets/smoke.example.jsonl"',
+            "repetitions = 1",
+            "min_pass_rate = 0.95",
+            "max_regression = 0.02",
+            "",
+            "[security]",
+            "redact_inputs = true",
+            "redact_outputs = true",
+            'tool_allowlist = ["retrieve"]',
+            'require_approval_for = ["external_write", "delete", "payment", "deploy"]',
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
-def _find_example_for(
-    *, language: str, workload: str, home: Path
-) -> Path | None:
+def _find_example_for(*, language: str, workload: str, home: Path) -> Path | None:
     examples = home / "examples"
     if not examples.is_dir():
         return None
@@ -795,9 +765,7 @@ def _find_example_for(
     return None
 
 
-def _override_toml_field(
-    text: str, field: str, value: str, *, section: str
-) -> str:
+def _override_toml_field(text: str, field: str, value: str, *, section: str) -> str:
     """Replace `<field> = "..."` under `[<section>]` in TOML text."""
     import re
 
@@ -808,7 +776,7 @@ def _override_toml_field(
     )
 
     def _repl(m: re.Match) -> str:
-        return f"{m.group(1)}{m.group(2)}\"{value}\""
+        return f'{m.group(1)}{m.group(2)}"{value}"'
 
     return pattern.sub(_repl, text)
 
@@ -861,9 +829,7 @@ def _status_to_rc(status: str, *, allow_skipped: bool = False) -> int:
 def _emit(result: RunResult, json_output: bool) -> int:
     if json_output:
         sys.stdout.write(
-            json.dumps(result.to_dict(), ensure_ascii=False, indent=2,
-                       sort_keys=True)
-            + "\n"
+            json.dumps(result.to_dict(), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
         )
         return _status_to_rc(result.status)
     # Human-readable summary.
@@ -874,9 +840,7 @@ def _emit(result: RunResult, json_output: bool) -> int:
         sys.stdout.write(f"  error: {err}\n")
     if result.summary:
         sys.stdout.write(
-            "  summary: "
-            + json.dumps(result.summary, ensure_ascii=False, sort_keys=True)
-            + "\n"
+            "  summary: " + json.dumps(result.summary, ensure_ascii=False, sort_keys=True) + "\n"
         )
     return _status_to_rc(result.status)
 

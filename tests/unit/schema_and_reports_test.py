@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 import tempfile
 import unittest
@@ -23,7 +22,6 @@ from ai_harness.evals import (  # noqa: E402
     EvalReport,
     _persist_report,
 )
-
 
 REPO = HERE.parent.parent
 
@@ -42,7 +40,7 @@ class SchemaParserParityTests(unittest.TestCase):
             d = Path(d)
             (d / "harness.toml").write_text(
                 'version = 1\n[project]\nname = "x"\nlanguage = "python"\n'
-                '[commands]\ntypecheck = []\n',
+                "[commands]\ntypecheck = []\n",
                 encoding="utf-8",
             )
             cfg = load_config(d / "harness.toml")
@@ -65,9 +63,16 @@ class ReportAtomicityTests(unittest.TestCase):
             duration_ms=10,
             harness_version="test",
             git_sha="unknown",
-            summary={"pass_rate": 1.0, "passed": 1, "failed": 0,
-                     "errors": 0, "skipped": 0, "total": 1,
-                     "p50_latency_ms": 0, "p95_latency_ms": 0},
+            summary={
+                "pass_rate": 1.0,
+                "passed": 1,
+                "failed": 0,
+                "errors": 0,
+                "skipped": 0,
+                "total": 1,
+                "p50_latency_ms": 0,
+                "p95_latency_ms": 0,
+            },
             cases=[],
             thresholds={"min_pass_rate": 0.9},
             status="passed",

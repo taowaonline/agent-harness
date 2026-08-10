@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import os
 import shutil
 import subprocess
 import time
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Iterable
 
 from .config import Config
 from .redaction import redact_argv
@@ -20,7 +17,6 @@ from .result import (
     RunResult,
     StageResult,
 )
-
 
 # Built-in stage names — the harness implements these directly. User
 # config may still override by defining a [commands] entry with the same
@@ -74,9 +70,7 @@ def run_target(cfg: Config, request: RunRequest, result: RunResult) -> RunResult
     elif name in BUILTIN_STAGES:
         stage = _run_builtin(cfg, name, request, result)
     else:
-        result.add_error(
-            f"Unknown target '{name}'. Use `./harness list` to see options."
-        )
+        result.add_error(f"Unknown target '{name}'. Use `./harness list` to see options.")
         result.status = STATUS_FAILED
         return result
     result.stages.append(stage)
@@ -104,9 +98,7 @@ def _run_workflow(
         # Cycles are also caught at config load; double-check at runtime.
         msg = f"workflow cycle: {' -> '.join(trail + [name])}"
         result.add_error(msg)
-        return StageResult(
-            name=name, kind="workflow", status=STATUS_BLOCKED, reason=msg
-        )
+        return StageResult(name=name, kind="workflow", status=STATUS_BLOCKED, reason=msg)
     started = time.monotonic()
     started_at_iso = _now_iso()
     wf_result = StageResult(name=name, kind="workflow", started_at=started_at_iso)
@@ -123,9 +115,7 @@ def _run_workflow(
                 name=child_name,
                 kind="unknown",
                 status=STATUS_BLOCKED,
-                reason=(
-                    f"workflow '{name}' references unknown target '{child_name}'"
-                ),
+                reason=(f"workflow '{name}' references unknown target '{child_name}'"),
             )
             result.add_error(child.reason or "")
         wf_result.children.append(child)
@@ -158,9 +148,7 @@ def _run_workflow(
     return wf_result
 
 
-def _run_builtin(
-    cfg: Config, name: str, request: RunRequest, result: RunResult
-) -> StageResult:
+def _run_builtin(cfg: Config, name: str, request: RunRequest, result: RunResult) -> StageResult:
     """Dispatch to a built-in stage. Eval defaults to offline in workflows."""
     if name in ("eval-smoke", "eval-full"):
         kind = "smoke" if name == "eval-smoke" else "full"
@@ -241,10 +229,7 @@ def _run_stage(cfg: Config, name: str, request: RunRequest) -> StageResult:
             continue
         sub_status, exit_code = _exec_one(argv, name)
         if sub_status == STATUS_FAILED:
-            reason = (
-                f"command exited {exit_code}: "
-                f"{' '.join(redact_argv(argv))}"
-            )
+            reason = f"command exited {exit_code}: {' '.join(redact_argv(argv))}"
             if single:
                 stage.argv = redact_argv(argv)
                 stage.exit_code = exit_code
@@ -325,7 +310,7 @@ def _exec_one(
 def _now_iso() -> str:
     import datetime as _dt
 
-    return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return _dt.datetime.now(_dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 # `os` imported for type completeness in future hooks (env scrubbing etc).

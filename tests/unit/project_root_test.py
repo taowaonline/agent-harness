@@ -41,9 +41,7 @@ dataset = "evals/datasets/smoke.jsonl"
 """
         (self.proj / "harness.toml").write_text(toml, encoding="utf-8")
         ds = '{"id":"a","input":{"query":"x"},"expected":{"contains":["x"]}}\n'
-        (self.proj / "evals" / "datasets" / "smoke.jsonl").write_text(
-            ds, encoding="utf-8"
-        )
+        (self.proj / "evals" / "datasets" / "smoke.jsonl").write_text(ds, encoding="utf-8")
 
     def test_load_config_sets_project_root(self) -> None:
         cfg = load_config(self.proj / "harness.toml")
@@ -70,9 +68,14 @@ dataset = "evals/datasets/smoke.jsonl"
         env = dict(os.environ)
         # Ensure the harness script can find ai_harness (adjacent src/)
         proc = subprocess.run(
-            ["python3", str(repo_root / "harness"),
-             "validate", "--config", str(self.proj / "harness.toml"),
-             "--json"],
+            [
+                "python3",
+                str(repo_root / "harness"),
+                "validate",
+                "--config",
+                str(self.proj / "harness.toml"),
+                "--json",
+            ],
             capture_output=True,
             text=True,
             cwd="/tmp",

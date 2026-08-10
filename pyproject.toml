@@ -24,3 +24,43 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 ai_harness = ["py.typed"]
+
+# ─────────────────────────────────────────────────────────────────────
+# Ruff: format + lint. Used by [commands].format and [commands].lint in
+# harness.toml. Run via `ruff format .` and `ruff check .`.
+# ─────────────────────────────────────────────────────────────────────
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+# Treat the harness script, tests, and src as the project scope.
+extend-exclude = [
+    "examples",         # external project templates — don't lint them
+    "evals/reports",    # generated artifacts
+    "harness-workspace", # skill-up workspaces
+]
+
+[tool.ruff.lint]
+# Conservative rule set: pycodestyle (E/W), Pyflakes (F), isort (I),
+# pyupgrade (UP), bugbear (B). Avoid aggressive lints like ANN/DARG.
+select = ["E", "W", "F", "I", "UP", "B"]
+ignore = [
+    "E501",  # line length handled by formatter; ruff format wraps automatically
+    "B008",  # function call in default arg — used for dataclass field defaults
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests legitimately do sys.path manipulation before imports, and use
+# subprocess.run without check=False intentionally (the test asserts
+# non-zero return codes).
+"tests/**/*.py" = [
+    "E402",   # module-level import not at top (sys.path munging)
+    "S101",   # use of assert (tests are made of asserts)
+    "PLW1510", # subprocess.run without explicit check — intentional
+]
+# Source-level: where we DO manipulate sys.path in the entry script.
+"harness" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

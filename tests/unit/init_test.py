@@ -21,7 +21,6 @@ from ai_harness.cli import (  # noqa: E402
 )
 from ai_harness.config import load_config  # noqa: E402
 
-
 REPO = HERE.parent.parent
 
 
@@ -68,10 +67,7 @@ class RenderTests(unittest.TestCase):
 
 class PathRewriteTests(unittest.TestCase):
     def test_localize_dataset_paths(self) -> None:
-        text = (
-            '[evals.smoke]\n'
-            'dataset = "../../evals/datasets/smoke.example.jsonl"\n'
-        )
+        text = '[evals.smoke]\ndataset = "../../evals/datasets/smoke.example.jsonl"\n'
         out = _localize_dataset_paths(text)
         self.assertIn('dataset = "evals/datasets/smoke.example.jsonl"', out)
 
@@ -83,8 +79,7 @@ class PathRewriteTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "harness.toml"
             p.write_text(
-                '[evals.smoke]\ndataset = "a/b.jsonl"\n'
-                '[evals.full]\ndataset = "c/d.jsonl"\n'
+                '[evals.smoke]\ndataset = "a/b.jsonl"\n[evals.full]\ndataset = "c/d.jsonl"\n'
             )
             paths = _dataset_paths_in_toml(p)
             self.assertEqual(paths, ["a/b.jsonl", "c/d.jsonl"])
@@ -92,11 +87,7 @@ class PathRewriteTests(unittest.TestCase):
 
 class OverrideFieldTests(unittest.TestCase):
     def test_override_name(self) -> None:
-        text = (
-            "[project]\n"
-            'name = "old"\n'
-            'language = "python"\n'
-        )
+        text = '[project]\nname = "old"\nlanguage = "python"\n'
         out = _override_toml_field(text, "name", "new", section="project")
         self.assertIn('name = "new"', out)
         self.assertNotIn('name = "old"', out)
@@ -105,13 +96,7 @@ class OverrideFieldTests(unittest.TestCase):
 
     def test_override_only_in_section(self) -> None:
         # A field with the same name outside the target section is left alone.
-        text = (
-            "[project]\n"
-            'name = "old"\n'
-            "\n"
-            "[other]\n"
-            'name = "keepme"\n'
-        )
+        text = '[project]\nname = "old"\n\n[other]\nname = "keepme"\n'
         out = _override_toml_field(text, "name", "new", section="project")
         self.assertIn('name = "new"', out)
         self.assertIn('name = "keepme"', out)
@@ -138,10 +123,14 @@ class EndToEndInitTests(unittest.TestCase):
     def test_init_python_rag_then_validate(self) -> None:
         rc = self._run_init(
             self.dir,
-            "--language", "python",
-            "--workload", "rag",
-            "--risk", "standard",
-            "--name", "demo",
+            "--language",
+            "python",
+            "--workload",
+            "rag",
+            "--risk",
+            "standard",
+            "--name",
+            "demo",
         )
         self.assertEqual(rc, 0)
         # Generated layout.

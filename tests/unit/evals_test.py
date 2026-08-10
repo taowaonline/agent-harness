@@ -20,8 +20,8 @@ from ai_harness.config import (  # noqa: E402
     SecurityConfig,
 )
 from ai_harness.evals import (  # noqa: E402
-    DatasetError,
     GRADER_REGISTRY,
+    DatasetError,
     compare_reports,
     grader_contains,
     grader_exact,
@@ -35,7 +35,6 @@ from ai_harness.evals import (  # noqa: E402
     run_eval,
 )
 from ai_harness.result import (  # noqa: E402
-    STATUS_BLOCKED,
     STATUS_FAILED,
     STATUS_PASSED,
     RunResult,
@@ -55,15 +54,27 @@ class DatasetTests(unittest.TestCase):
         self.dir = Path(self.tmp.name)
 
     def test_load_valid_dataset(self) -> None:
-        p = _write_dataset(self.dir, [
-            json.dumps({
-                "id": "a", "input": {"query": "q"}, "expected": {"contains": ["q"]},
-                "tags": ["smoke"], "metadata": {"source": "synthetic"},
-            }),
-            json.dumps({
-                "id": "b", "input": {"query": "r"}, "expected": {"contains": ["r"]},
-            }),
-        ])
+        p = _write_dataset(
+            self.dir,
+            [
+                json.dumps(
+                    {
+                        "id": "a",
+                        "input": {"query": "q"},
+                        "expected": {"contains": ["q"]},
+                        "tags": ["smoke"],
+                        "metadata": {"source": "synthetic"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "id": "b",
+                        "input": {"query": "r"},
+                        "expected": {"contains": ["r"]},
+                    }
+                ),
+            ],
+        )
         cases = load_dataset(p)
         self.assertEqual(len(cases), 2)
         self.assertEqual(cases[0].id, "a")
@@ -71,35 +82,47 @@ class DatasetTests(unittest.TestCase):
         self.assertEqual(cases[1].metadata, {})
 
     def test_load_skips_blank_and_comment_lines(self) -> None:
-        p = _write_dataset(self.dir, [
-            "",
-            "# this is a comment",
-            json.dumps({"id": "a", "input": {}, "expected": {}}),
-        ])
+        p = _write_dataset(
+            self.dir,
+            [
+                "",
+                "# this is a comment",
+                json.dumps({"id": "a", "input": {}, "expected": {}}),
+            ],
+        )
         cases = load_dataset(p)
         self.assertEqual(len(cases), 1)
 
     def test_duplicate_id_rejected(self) -> None:
-        p = _write_dataset(self.dir, [
-            json.dumps({"id": "x", "input": {}, "expected": {}}),
-            json.dumps({"id": "x", "input": {}, "expected": {}}),
-        ])
+        p = _write_dataset(
+            self.dir,
+            [
+                json.dumps({"id": "x", "input": {}, "expected": {}}),
+                json.dumps({"id": "x", "input": {}, "expected": {}}),
+            ],
+        )
         with self.assertRaises(DatasetError) as cm:
             load_dataset(p)
         self.assertIn("duplicate case id", str(cm.exception))
 
     def test_missing_required_field_rejected(self) -> None:
-        p = _write_dataset(self.dir, [
-            json.dumps({"id": "x", "input": {}}),  # no 'expected'
-        ])
+        p = _write_dataset(
+            self.dir,
+            [
+                json.dumps({"id": "x", "input": {}}),  # no 'expected'
+            ],
+        )
         with self.assertRaises(DatasetError):
             load_dataset(p)
 
     def test_invalid_json_line_reports_lineno(self) -> None:
-        p = _write_dataset(self.dir, [
-            json.dumps({"id": "x", "input": {}, "expected": {}}),
-            "{not json",
-        ])
+        p = _write_dataset(
+            self.dir,
+            [
+                json.dumps({"id": "x", "input": {}, "expected": {}}),
+                "{not json",
+            ],
+        )
         with self.assertRaises(DatasetError) as cm:
             load_dataset(p)
         # Line 2 should be named in the error.
@@ -205,8 +228,14 @@ class GraderTests(unittest.TestCase):
 
     def test_all_graders_registered(self) -> None:
         for name in [
-            "exact", "contains", "not_contains", "regex",
-            "json_parse", "json_field", "tool_call", "threshold",
+            "exact",
+            "contains",
+            "not_contains",
+            "regex",
+            "json_parse",
+            "json_field",
+            "tool_call",
+            "threshold",
         ]:
             self.assertIn(name, GRADER_REGISTRY)
 
@@ -217,15 +246,21 @@ class RunEvalTests(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.dir = Path(self.tmp.name)
         import os
+
         self._cwd = os.getcwd()
         os.chdir(self.dir)
 
     def tearDown(self) -> None:
         import os
+
         os.chdir(self._cwd)
 
     def _cfg_with_dataset(
-        self, dataset_text: str, *, min_pass_rate: float = 0.9, name: str = "smoke",
+        self,
+        dataset_text: str,
+        *,
+        min_pass_rate: float = 0.9,
+        name: str = "smoke",
     ) -> Config:
         p = self.dir / "ds.jsonl"
         p.write_text(dataset_text, encoding="utf-8")
@@ -240,16 +275,24 @@ class RunEvalTests(unittest.TestCase):
 
     def test_offline_eval_passes_when_fixtures_present(self) -> None:
         cfg = self._cfg_with_dataset(
-            "\n".join([
-                json.dumps({
-                    "id": "a", "input": {"output": {"answer": "hello"}},
-                    "expected": {"contains": ["hello"]},
-                }),
-                json.dumps({
-                    "id": "b", "input": {"output": {"answer": "world"}},
-                    "expected": {"contains": ["world"]},
-                }),
-            ])
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "id": "a",
+                            "input": {"output": {"answer": "hello"}},
+                            "expected": {"contains": ["hello"]},
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "id": "b",
+                            "input": {"output": {"answer": "world"}},
+                            "expected": {"contains": ["world"]},
+                        }
+                    ),
+                ]
+            )
         )
         result = RunResult(command="eval")
         stage = run_eval(cfg, "smoke", result, offline=True)
@@ -259,16 +302,24 @@ class RunEvalTests(unittest.TestCase):
 
     def test_offline_eval_fails_threshold(self) -> None:
         cfg = self._cfg_with_dataset(
-            "\n".join([
-                json.dumps({
-                    "id": "a", "input": {"output": {"answer": "right"}},
-                    "expected": {"contains": ["right"]},
-                }),
-                json.dumps({
-                    "id": "b", "input": {"output": {"answer": "wrong"}},
-                    "expected": {"contains": ["right"]},
-                }),
-            ]),
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "id": "a",
+                            "input": {"output": {"answer": "right"}},
+                            "expected": {"contains": ["right"]},
+                        }
+                    ),
+                    json.dumps(
+                        {
+                            "id": "b",
+                            "input": {"output": {"answer": "wrong"}},
+                            "expected": {"contains": ["right"]},
+                        }
+                    ),
+                ]
+            ),
             min_pass_rate=0.99,
         )
         result = RunResult(command="eval")
@@ -277,12 +328,17 @@ class RunEvalTests(unittest.TestCase):
 
     def test_offline_eval_skips_case_without_fixture(self) -> None:
         cfg = self._cfg_with_dataset(
-            "\n".join([
-                json.dumps({
-                    "id": "a", "input": {},  # no fixture output
-                    "expected": {"contains": ["anything"]},
-                }),
-            ]),
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "id": "a",
+                            "input": {},  # no fixture output
+                            "expected": {"contains": ["anything"]},
+                        }
+                    ),
+                ]
+            ),
             min_pass_rate=0.0,
         )
         result = RunResult(command="eval")
@@ -296,13 +352,17 @@ class RunEvalTests(unittest.TestCase):
         # in the persisted report — outputs are never written to disk by
         # the offline runner.
         cfg = self._cfg_with_dataset(
-            "\n".join([
-                json.dumps({
-                    "id": "a",
-                    "input": {"output": {"answer": "Bearer eyJhbc.def.ghijklmno.secret"}},
-                    "expected": {"contains": ["Bearer"]},
-                }),
-            ]),
+            "\n".join(
+                [
+                    json.dumps(
+                        {
+                            "id": "a",
+                            "input": {"output": {"answer": "Bearer eyJhbc.def.ghijklmno.secret"}},
+                            "expected": {"contains": ["Bearer"]},
+                        }
+                    ),
+                ]
+            ),
             min_pass_rate=0.0,
         )
         result = RunResult(command="eval")

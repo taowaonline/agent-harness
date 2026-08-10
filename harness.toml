@@ -7,30 +7,48 @@ workload = "agent"
 risk = "standard"
 
 [commands]
-# The control plane is pure Python stdlib, so its own checks need no
-# third-party tooling. Optional tools (ruff, pyright) are reported as
-# skipped when absent — see `doctor`.
+# Bootstrap: verify Python is reachable. The harness has no third-party
+# deps so there's nothing to install.
 bootstrap = [["python3", "-c", "import sys; print(sys.version)"]]
-format = [["python3", "-m", "unittest", "discover", "-q", "tests/unit", "-p", "*_test.py"]]
-lint = [["python3", "-m", "compileall", "-q", "src/ai_harness"]]
-typecheck = []
+
+# Format: ruff format in check mode (--check fails on drift without
+# writing). Writes are done separately via `ruff format .` when applying.
+format = [["ruff", "format", "--check", "."]]
+
+# Lint: ruff check (E/W/F/I/UP/B rule set, see pyproject.toml).
+lint = [["ruff", "check", "."]]
+
+# Type check: pyright on the control-plane source. Tests are excluded
+# (they're covered by `test-unit`); pyright clean is enforced for src/
+# only.
+typecheck = [["pyright", "src/ai_harness"]]
+
+# Unit + integration tests via stdlib unittest.
 test-unit = [["python3", "-m", "unittest", "discover", "-s", "tests/unit", "-p", "*_test.py"]]
 test-integration = [["python3", "-m", "unittest", "discover", "-s", "tests/integration", "-p", "*_test.py"]]
 
 [workflows]
-check = ["lint", "test-unit"]
+# Full PR check: format + lint + typecheck + unit. All stages are
+# configured (no `[]` placeholders), so a green `check` actually means
+# all four gate dimensions passed.
+check = ["format", "lint", "typecheck", "test-unit"]
 release-check = ["check", "test-integration", "eval-full", "security"]
 
 [evals.smoke]
 dataset = "evals/datasets/smoke.example.jsonl"
 sample_limit = 20
 timeout_seconds = 120
+# max_cost_usd is advisory-only — see [evals.full] comment.
 max_cost_usd = 2.0
 min_pass_rate = 0.90
 
 [evals.full]
 dataset = "evals/datasets/regression.example.jsonl"
 repetitions = 1
+# `max_cost_usd` is PLANNED, not enforced. The harness has no provider
+# price table; this field is parsed, surfaced in thresholds, and warned
+# about under `validate --strict`. It will become enforced once a
+# price-table integration is added. See docs/observability.md.
 max_cost_usd = 50.0
 min_pass_rate = 0.95
 max_regression = 0.02
