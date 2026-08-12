@@ -28,16 +28,16 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.cli import main  # noqa: E402
-from ai_harness.config import (  # noqa: E402
+from agent_harness.cli import main  # noqa: E402
+from agent_harness.config import (  # noqa: E402
     Config,
     EvalConfig,
     ProjectInfo,
     SecurityConfig,
     load_config,
 )
-from ai_harness.evals import run_eval  # noqa: E402
-from ai_harness.result import STATUS_FAILED, RunResult  # noqa: E402
+from agent_harness.evals import run_eval  # noqa: E402
+from agent_harness.result import STATUS_FAILED, RunResult  # noqa: E402
 
 REPO = HERE.parent.parent
 FAKE = str(REPO / "tests" / "fixtures" / "fake_provider.py")
@@ -400,8 +400,8 @@ class InitVendorTests(unittest.TestCase):
                 ]
             )
         self.assertEqual(rc, 0, err_buf.getvalue())
-        # Vendored src/ai_harness/ must exist.
-        self.assertTrue((self.dir / "src" / "ai_harness" / "cli.py").exists())
+        # Vendored src/agent_harness/ must exist.
+        self.assertTrue((self.dir / "src" / "agent_harness" / "cli.py").exists())
         # Run ./harness --version in a clean env.
         env = {k: v for k, v in os.environ.items() if k != "HARNESS_HOME"}
         env["PATH"] = os.environ.get("PATH", "")
@@ -416,7 +416,7 @@ class InitVendorTests(unittest.TestCase):
         self.assertIn("harness", proc.stdout)
 
     def test_init_default_does_not_vendor(self) -> None:
-        # Without --vendor, src/ai_harness/ must NOT be copied.
+        # Without --vendor, src/agent_harness/ must NOT be copied.
         out_buf, err_buf = io.StringIO(), io.StringIO()
         with redirect_stdout(out_buf), redirect_stderr(err_buf):
             rc = main(
@@ -441,7 +441,7 @@ class RunnerTimeoutDocTests(unittest.TestCase):
     """§八 8: Runner timeout docstring matches whole-subprocess semantics."""
 
     def test_docstring_says_whole_subprocess_timeout(self) -> None:
-        from ai_harness import evals as _evals
+        from agent_harness import evals as _evals
 
         # Read the source-of-truth docstring from the live function.
         doc = (_evals._invoke_subprocess_runner.__doc__ or "").lower()

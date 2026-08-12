@@ -18,18 +18,18 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.config import (  # noqa: E402
+from agent_harness.config import (  # noqa: E402
     Config,
     EvalConfig,
     ProjectInfo,
     SecurityConfig,
 )
-from ai_harness.evals import (  # noqa: E402
+from agent_harness.evals import (  # noqa: E402
     _invoke_subprocess_runner,
     _RunnerError,
     run_eval,
 )
-from ai_harness.result import STATUS_FAILED, STATUS_PASSED, RunResult  # noqa: E402
+from agent_harness.result import STATUS_FAILED, STATUS_PASSED, RunResult  # noqa: E402
 
 REPO = HERE.parent.parent
 FAKE = str(REPO / "tests" / "fixtures" / "fake_provider.py")
@@ -65,7 +65,7 @@ class RunnerProtocolUnitTests(unittest.TestCase):
         (self.dir / "ds.jsonl").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def _make_cases(self, n: int = 2):
-        from ai_harness.evals import EvalCase
+        from agent_harness.evals import EvalCase
 
         return [
             EvalCase(

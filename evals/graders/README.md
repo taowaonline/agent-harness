@@ -6,7 +6,7 @@ takes `(expected, output)` and returns `(bool, reason)`.
 Register one with:
 
 ```python
-from ai_harness.evals import register_grader
+from agent_harness.evals import register_grader
 
 
 def my_grader(expected, output):
@@ -23,7 +23,7 @@ Reference a registered grader from a dataset record via:
 {"expected": {"graders": [{"kind": "my_kind", "...": "..."}]}}
 ```
 
-See `src/ai_harness/evals.py` for the built-in graders (exact, contains,
+See `src/agent_harness/evals.py` for the built-in graders (exact, contains,
 regex, json_parse, json_field, tool_call, threshold).
 
 ## Guidelines for model-based graders

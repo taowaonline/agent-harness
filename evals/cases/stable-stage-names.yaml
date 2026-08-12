@@ -8,7 +8,7 @@ description: |
 
 input:
   prompt: |
-    In ai-harness, what does the `lint` stage actually run? I want a
+    In agent-harness, what does the `lint` stage actually run? I want a
     one-line answer for a Go project, and separately for a Python
     project. Explain why the stage name is the same even though the
     underlying tool differs. Don't run anything.

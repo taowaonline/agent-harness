@@ -13,13 +13,13 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.config import (  # noqa: E402
+from agent_harness.config import (  # noqa: E402
     Config,
     ProjectInfo,
     SecurityConfig,
 )
-from ai_harness.result import STATUS_FAILED, STATUS_PASSED, RunResult  # noqa: E402
-from ai_harness.security import _matches_exclude, run_security_check  # noqa: E402
+from agent_harness.result import STATUS_FAILED, STATUS_PASSED, RunResult  # noqa: E402
+from agent_harness.security import _matches_exclude, run_security_check  # noqa: E402
 
 
 def _cfg(security: SecurityConfig) -> Config:

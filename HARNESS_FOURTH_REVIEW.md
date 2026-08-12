@@ -83,7 +83,7 @@ $ grep -n "_CANONICAL_HOME" harness
 ### B3. `--strict` 是死代码
 
 ```text
-$ grep -c "args.strict" src/ai_harness/cli.py
+$ grep -c "args.strict" src/agent_harness/cli.py
 0
 ```
 
@@ -92,7 +92,7 @@ CLI 注册了 `--strict` 但 `_cmd_validate` 从不读它。`validate` 与 `vali
 ### B4. 字段"假装生效"
 
 ```text
-$ grep -nE "repetitions|timeout_seconds|max_cost_usd" src/ai_harness/evals.py | grep -vE "(dataclass|threshold_block|EvalConfig|=.*None|=.*ec\.|self\.|= int)"
+$ grep -nE "repetitions|timeout_seconds|max_cost_usd" src/agent_harness/evals.py | grep -vE "(dataclass|threshold_block|EvalConfig|=.*None|=.*ec\.|self\.|= int)"
 510:        "timeout_seconds": ec.timeout_seconds,
 511:        "max_cost_usd": ec.max_cost_usd,
 ```
@@ -198,7 +198,7 @@ python3 -m unittest discover -s tests/unit -p '*_test.py'
 # Bug 复现
 ./harness run typecheck --dry-run --json | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])"
 grep -n "_CANONICAL_HOME" harness
-grep -c "args.strict" src/ai_harness/cli.py
+grep -c "args.strict" src/agent_harness/cli.py
 cd /tmp && harness validate --config /Users/tommacmini4/Documents/code/harness/harness.toml
 ```
 

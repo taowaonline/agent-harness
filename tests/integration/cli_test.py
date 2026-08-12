@@ -21,8 +21,8 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.cli import main  # noqa: E402
-from ai_harness.policy import (  # noqa: E402
+from agent_harness.cli import main  # noqa: E402
+from agent_harness.policy import (  # noqa: E402
     EXIT_STAGE_FAILED,
     EXIT_SUCCESS,
     EXIT_VALIDATION,
@@ -38,7 +38,7 @@ workload = "rag"
 risk = "standard"
 
 [commands]
-lint = [["python3", "-m", "py_compile", "src/ai_harness/__init__.py"]]
+lint = [["python3", "-m", "py_compile", "src/agent_harness/__init__.py"]]
 test-unit = [["python3", "-c", "print('ok')"]]
 typecheck = []
 
@@ -64,7 +64,7 @@ class CLIIntegrationTests(unittest.TestCase):
         (self.dir / "harness.toml").write_text(HARNESS_TOML, encoding="utf-8")
         (self.dir / "smoke.jsonl").write_text(SMOKE_DATASET, encoding="utf-8")
         # Subdir for py_compile to validate against.
-        sub = self.dir / "src" / "ai_harness"
+        sub = self.dir / "src" / "agent_harness"
         sub.mkdir(parents=True)
         (sub / "__init__.py").write_text("'''demo package'''\n", encoding="utf-8")
         self._cwd = os.getcwd()

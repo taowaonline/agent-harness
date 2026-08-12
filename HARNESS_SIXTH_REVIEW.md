@@ -18,7 +18,7 @@
 2. malformed Runner 输出会让 case 变成 skipped，但 Eval 顶层仍可能为 passed；
 3. `validate --strict` 返回 exit 1 时，JSON 结果仍写成 `status=passed`。
 
-此外，`init` 仍只复制入口和 Schema，不复制 `src/ai_harness`；跨机器使用需要额外安装包或手工 vendoring，分发契约还需要进一步明确。
+此外，`init` 仍只复制入口和 Schema，不复制 `src/agent_harness`；跨机器使用需要额外安装包或手工 vendoring，分发契约还需要进一步明确。
 
 ## 二、变更范围核验
 
@@ -26,11 +26,11 @@
 
 - `.github/workflows/ci.yml`、`.github/workflows/security.yml`
 - `harness`、`harness.schema.json`
-- `src/ai_harness/cli.py`
-- `src/ai_harness/config.py`
-- `src/ai_harness/evals.py`
-- `src/ai_harness/policy.py`
-- `src/ai_harness/runner.py`
+- `src/agent_harness/cli.py`
+- `src/agent_harness/config.py`
+- `src/agent_harness/evals.py`
+- `src/agent_harness/policy.py`
+- `src/agent_harness/runner.py`
 - `tests/integration/cli_test.py`
 - `tests/unit/runner_test.py`
 
@@ -212,7 +212,7 @@ Runner 使用 `subprocess.run(..., timeout=ec.timeout_seconds)`，这是有效�
 
 ### 7.3 init 仍不是完全自包含的 vendored 安装
 
-入口现在明确要求入口旁有 `src/ai_harness`、设置 `HARNESS_HOME` 或 pip/pipx 安装包。但 `harness init` 仍只复制入口和 Schema，不复制 `src/`，也没有生成 package pin。
+入口现在明确要求入口旁有 `src/agent_harness`、设置 `HARNESS_HOME` 或 pip/pipx 安装包。但 `harness init` 仍只复制入口和 Schema，不复制 `src/`，也没有生成 package pin。
 
 本轮隔离测试复制了 `harness + src`，证明的是 vendored layout 可运行，不是 `init` 产物单独可运行。
 

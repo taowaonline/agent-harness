@@ -19,7 +19,7 @@ remain anonymous).
 
 Vulnerabilities in:
 
-- The harness control plane (`src/ai_harness/`).
+- The harness control plane (`src/agent_harness/`).
 - The example configs and CI workflows shipped in this repo.
 - The redaction patterns and security gate logic.
 

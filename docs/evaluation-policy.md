@@ -70,7 +70,7 @@ blocker.
 To turn a production failure into a regression sample:
 
 1. Capture the trace (see `docs/observability.md`).
-2. Redact all PII and secrets using `ai_harness.redaction.redact`.
+2. Redact all PII and secrets using `agent_harness.redaction.redact`.
 3. Extract the input and the expected corrected output.
 4. Add the case to the appropriate dataset with
    `metadata.source = "production-feedback"` and a date stamp.

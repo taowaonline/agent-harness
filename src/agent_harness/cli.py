@@ -159,7 +159,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sp.add_argument(
         "--vendor",
         action="store_true",
-        help="Vendor src/ai_harness/ alongside the executable so the project "
+        help="Vendor src/agent_harness/ alongside the executable so the project "
         "is self-contained. Default is the 'global install' model: the "
         "project only stores harness.toml, and contributors install the "
         "harness CLI globally (see README).",
@@ -475,15 +475,15 @@ def _cmd_init(args: argparse.Namespace) -> int:
         dst_schema.write_bytes(src_schema.read_bytes())
         actions.append(f"copied harness.schema.json -> {dst_schema}")
 
-    # 1b. If --vendor, copy src/ai_harness/ alongside so the project is
+    # 1b. If --vendor, copy src/agent_harness/ alongside so the project is
     #     self-contained (works without HARNESS_HOME or global install).
     #     Default is the global-install model: contributors install the
     #     harness CLI globally and the project only commits the contract.
     if args.vendor:
         import shutil as _shutil
 
-        src_pkg = home / "src" / "ai_harness"
-        dst_pkg_dir = cwd / "src" / "ai_harness"
+        src_pkg = home / "src" / "agent_harness"
+        dst_pkg_dir = cwd / "src" / "agent_harness"
         if src_pkg.is_dir():
             if dst_pkg_dir.exists():
                 _shutil.rmtree(dst_pkg_dir)
@@ -493,7 +493,7 @@ def _cmd_init(args: argparse.Namespace) -> int:
             for cache in dst_pkg_dir.rglob("__pycache__"):
                 _shutil.rmtree(cache, ignore_errors=True)
             actions.append(
-                f"vendored src/ai_harness/ -> {dst_pkg_dir} "
+                f"vendored src/agent_harness/ -> {dst_pkg_dir} "
                 f"(self-contained: works without HARNESS_HOME)"
             )
         else:
@@ -580,10 +580,10 @@ def _cmd_init(args: argparse.Namespace) -> int:
 
     result.summary["actions"] = actions
     install_hint = (
-        "Project is self-contained (vendored src/ai_harness/); "
+        "Project is self-contained (vendored src/agent_harness/); "
         "./harness works without HARNESS_HOME."
         if args.vendor
-        else "Install the harness CLI globally (see tom_harness README) or "
+        else "Install the harness CLI globally (see agent_harness README) or "
         "set HARNESS_HOME; the ./harness entry alone is not self-contained."
     )
     result.summary["next_steps"] = [

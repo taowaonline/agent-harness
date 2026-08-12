@@ -1,5 +1,5 @@
 ---
-name: ai-harness
+name: agent-harness
 description: >-
   Vendor-neutral control plane for AI-assisted development and AI application
   lifecycle. Use when the user wants to set up or audit local CI/CD for an AI
@@ -11,7 +11,7 @@ description: >-
   vendor, or AI framework.
 ---
 
-# ai-harness
+# agent-harness
 
 A coding Agent uses this skill when the project has adopted the harness
 (detect `./harness` and `harness.toml` at the repo root). The Agent invokes
@@ -21,7 +21,7 @@ Skill root (this folder) layout:
 
 - `harness` — executable entry point
 - `harness.toml` — this repo's own config (also the reference example)
-- `src/ai_harness/` — control plane (Python 3.11+ stdlib only)
+- `src/agent_harness/` — control plane (Python 3.11+ stdlib only)
 - `profiles/{languages,workloads,risk}/` — copy-and-override snippets
 - `examples/<lang>-<workload>/harness.toml` — four cross-language references
 - `evals/datasets/*.example.jsonl` — offline datasets with fixture outputs

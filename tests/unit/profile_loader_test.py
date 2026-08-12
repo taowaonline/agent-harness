@@ -13,7 +13,7 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.config import ConfigError, load_config  # noqa: E402
+from agent_harness.config import ConfigError, load_config  # noqa: E402
 
 REPO = HERE.parent.parent
 

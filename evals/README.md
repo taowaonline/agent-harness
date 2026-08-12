@@ -14,7 +14,7 @@ project.
 
 `*.example.jsonl` files include a fixture `output` so the offline runner
 produces a deterministic result. In production, drop the `output` field and
-attach a real `ModelProvider` (see `src/ai_harness/evals.py`).
+attach a real `ModelProvider` (see `src/agent_harness/evals.py`).
 
 ## Record schema
 
@@ -48,7 +48,7 @@ be redacted before it lands here — see `docs/observability.md`).
 
 ## Graders
 
-The harness ships with deterministic graders. See `src/ai_harness/evals.py`
+The harness ships with deterministic graders. See `src/agent_harness/evals.py`
 for the registry:
 
 | Kind | Use |
@@ -62,7 +62,7 @@ for the registry:
 | `threshold` | Numeric metric (latency, tokens, cost) below limit |
 
 To register a custom grader (e.g. semantic similarity, model judge), call
-`ai_harness.evals.register_grader(name, fn)` from your project. The base
+`agent_harness.evals.register_grader(name, fn)` from your project. The base
 unit and integration tests never depend on a model API.
 
 ## Reports

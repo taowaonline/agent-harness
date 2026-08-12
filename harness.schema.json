@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-harness.local/harness.schema.json",
+  "$id": "https://agent-harness.local/harness.schema.json",
   "title": "Harness configuration",
   "type": "object",
   "required": ["version", "project"],

@@ -197,7 +197,7 @@ def _scan_repo_for_secrets(scan_exclude: list[str] | None = None) -> list[str]:
         # Skip the harness's own redaction module — it literally contains
         # the patterns used to detect secrets. Same for the security
         # module, which contains a synthetic redaction probe.
-        if rel in ("src/ai_harness/redaction.py", "src/ai_harness/security.py"):
+        if rel in ("src/agent_harness/redaction.py", "src/agent_harness/security.py"):
             continue
         for lineno, line in enumerate(text.splitlines(), start=1):
             for pat in _SECRET_PATTERNS:

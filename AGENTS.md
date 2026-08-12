@@ -7,7 +7,7 @@ working in this repository. Read it before making changes.
 
 1. Read `README.md`, `docs/architecture.md`, and the test that covers the area
    you are touching.
-2. Read the relevant source file in `src/ai_harness/` end-to-end before
+2. Read the relevant source file in `src/agent_harness/` end-to-end before
    editing.
 3. Confirm the acceptance criteria of the task in your own words. For complex
    tasks, post a short plan first.

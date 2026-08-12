@@ -19,18 +19,18 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.config import (  # noqa: E402
+from agent_harness.config import (  # noqa: E402
     Config,
     ProjectInfo,
     SecurityConfig,
 )
-from ai_harness.result import (  # noqa: E402
+from agent_harness.result import (  # noqa: E402
     STATUS_FAILED,
     STATUS_PASSED,
     STATUS_SKIPPED,
     RunResult,
 )
-from ai_harness.runner import RunRequest, run_target  # noqa: E402
+from agent_harness.runner import RunRequest, run_target  # noqa: E402
 
 
 def _cfg(commands=None, workflows=None) -> Config:
@@ -142,7 +142,7 @@ class EntryDistributionTests(unittest.TestCase):
             # Copy harness script
             shutil.copy2(repo_root / "harness", d / "harness")
             (d / "harness").chmod(0o755)
-            # Copy src/ so the script finds ai_harness adjacent
+            # Copy src/ so the script finds agent_harness adjacent
             shutil.copytree(repo_root / "src", d / "src")
             # Run with cleared HARNESS_HOME
             env = {k: v for k, v in os.environ.items() if k != "HARNESS_HOME"}

@@ -8,7 +8,7 @@ description: |
 
 input:
   prompt: |
-    I want to run a quick smoke eval on this ai-harness PR before I push.
+    I want to run a quick smoke eval on this agent-harness PR before I push.
     I don't want to spend any model budget on this run — fixtures are
     fine. What's the right harness command? Give the command, don't run.
 

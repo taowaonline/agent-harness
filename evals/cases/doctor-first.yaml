@@ -9,7 +9,7 @@ description: |
 
 input:
   prompt: |
-    I just cloned an AI project that uses ai-harness (I can see ./harness
+    I just cloned an AI project that uses agent-harness (I can see ./harness
     and harness.toml at the repo root). I'm on a fresh machine and have
     no idea if my Python, Ruff, Pyright are set up correctly for this
     project. Before I touch anything, what's the first harness command

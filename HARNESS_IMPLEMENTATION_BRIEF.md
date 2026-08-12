@@ -95,7 +95,7 @@
 ├── harness.toml                    # 本仓库自身配置
 ├── harness.schema.json             # 配置的机器可读契约
 ├── pyproject.toml                  # 仅用于 Harness 控制面
-├── src/ai_harness/
+├── src/agent_harness/
 │   ├── __init__.py
 │   ├── cli.py
 │   ├── config.py

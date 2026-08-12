@@ -1,7 +1,7 @@
 # Harness 任务书评估与改进（实施后审计）
 
 评估对象：[HARNESS_IMPLEMENTATION_BRIEF.md](./HARNESS_IMPLEMENTATION_BRIEF.md)
-实施产物：[src/ai_harness/](./src/ai_harness/) + [examples/](./examples/) + [tests/](./tests/)
+实施产物：[src/agent_harness/](./src/agent_harness/) + [examples/](./examples/) + [tests/](./tests/)
 
 本文档分两半：
 

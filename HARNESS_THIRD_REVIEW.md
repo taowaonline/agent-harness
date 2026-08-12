@@ -52,7 +52,7 @@ git diff --check
 _CANONICAL_HOME = "/Users/tommacmini4/Documents/code/harness"
 ```
 
-`init` 只复制入口脚本和 Schema，不复制 `src/ai_harness`，也不保证目标项目已安装 `ai-harness` 包。
+`init` 只复制入口脚本和 Schema，不复制 `src/agent_harness`，也不保证目标项目已安装 `agent-harness` 包。
 
 后果是：
 
@@ -63,7 +63,7 @@ _CANONICAL_HOME = "/Users/tommacmini4/Documents/code/harness"
 改进要求：选择并实现一种正式分发方式：
 
 1. 可安装 CLI：目标项目声明固定版本，`harness` 只是薄 wrapper。
-2. Vendored CLI：初始化时复制完整 `src/ai_harness` 和必要元数据。
+2. Vendored CLI：初始化时复制完整 `src/agent_harness` 和必要元数据。
 3. Monorepo 引用：明确目标项目必须位于 Harness 源码树内。
 
 必须增加一个没有源仓库路径的隔离测试，不能只依赖当前用户目录运行成功。

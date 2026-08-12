@@ -1,4 +1,4 @@
-"""Unit tests for ai_harness.redaction."""
+"""Unit tests for agent_harness.redaction."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.redaction import (  # noqa: E402
+from agent_harness.redaction import (  # noqa: E402
     is_sensitive_env_var,
     redact,
     redact_argv,

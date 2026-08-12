@@ -1,4 +1,4 @@
-"""Unit tests for ai_harness.evals — datasets, graders, gates."""
+"""Unit tests for agent_harness.evals — datasets, graders, gates."""
 
 from __future__ import annotations
 
@@ -13,13 +13,13 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.config import (  # noqa: E402
+from agent_harness.config import (  # noqa: E402
     Config,
     EvalConfig,
     ProjectInfo,
     SecurityConfig,
 )
-from ai_harness.evals import (  # noqa: E402
+from agent_harness.evals import (  # noqa: E402
     GRADER_REGISTRY,
     DatasetError,
     compare_reports,
@@ -34,7 +34,7 @@ from ai_harness.evals import (  # noqa: E402
     load_dataset,
     run_eval,
 )
-from ai_harness.result import (  # noqa: E402
+from agent_harness.result import (  # noqa: E402
     STATUS_FAILED,
     STATUS_PASSED,
     RunResult,

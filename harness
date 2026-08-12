@@ -6,7 +6,7 @@ module path or set PYTHONPATH. Resolution order:
 
   1. `<this script's dir>/src`           — running from the source repo
   2. `$HARNESS_HOME/src`                 — explicit override
-  3. bare `import ai_harness`            — installed via pip / pipx
+  3. bare `import agent_harness`            — installed via pip / pipx
 
 No hardcoded canonical path. If all three resolutions fail the script
 prints actionable install instructions and exits.
@@ -31,22 +31,22 @@ def _bootstrap() -> int:
         if os.path.isdir(env_src) and env_src not in sys.path:
             sys.path.insert(0, env_src)
 
-    # 3. Try to import. If ai_harness is pip-installed, this works without
+    # 3. Try to import. If agent_harness is pip-installed, this works without
     #    any sys.path manipulation.
     try:
-        from ai_harness.cli import main
+        from agent_harness.cli import main
     except ImportError as e:
         sys.stderr.write(
-            f"harness: cannot find ai_harness package ({e}).\n"
+            f"harness: cannot find agent_harness package ({e}).\n"
             f"\n"
             f"One of these must hold:\n"
-            f"  - Run from a checkout that has ./src/ai_harness/ next to this script\n"
+            f"  - Run from a checkout that has ./src/agent_harness/ next to this script\n"
             f"  - Set HARNESS_HOME to the source repo path\n"
-            f"  - Install the package: pip install --user ai-harness "
-            f"(or pipx install ai-harness)\n"
+            f"  - Install the package: pip install --user agent-harness "
+            f"(or pipx install agent-harness)\n"
             f"\n"
             f"This script no longer hardcodes a fallback path. "
-            f"Vendored installs must ship src/ai_harness/ alongside.\n"
+            f"Vendored installs must ship src/agent_harness/ alongside.\n"
         )
         return 4  # internal error
 

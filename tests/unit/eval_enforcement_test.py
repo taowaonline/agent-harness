@@ -19,15 +19,15 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.cli import main  # noqa: E402
-from ai_harness.config import (  # noqa: E402
+from agent_harness.cli import main  # noqa: E402
+from agent_harness.config import (  # noqa: E402
     Config,
     EvalConfig,
     ProjectInfo,
     SecurityConfig,
 )
-from ai_harness.evals import compare_reports, run_eval  # noqa: E402
-from ai_harness.result import STATUS_PASSED, RunResult  # noqa: E402
+from agent_harness.evals import compare_reports, run_eval  # noqa: E402
+from agent_harness.result import STATUS_PASSED, RunResult  # noqa: E402
 
 REPO = HERE.parent.parent
 FAKE = str(REPO / "tests" / "fixtures" / "fake_provider.py")

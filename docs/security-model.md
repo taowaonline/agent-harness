@@ -59,7 +59,7 @@ A failure on any adversarial sample is a release blocker.
 
 ## Redaction
 
-`ai_harness.redaction` applies conservative secret-detection patterns:
+`agent_harness.redaction` applies conservative secret-detection patterns:
 
 - Generic `api_key=`, `token=`, `secret=`, `password=`, `authorization=`
 - AWS access key ids and secret keys

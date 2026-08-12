@@ -1,4 +1,4 @@
-"""Unit tests for ai_harness.runner — argv execution, dry-run, exit codes."""
+"""Unit tests for agent_harness.runner — argv execution, dry-run, exit codes."""
 
 from __future__ import annotations
 
@@ -11,19 +11,19 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.config import (  # noqa: E402
+from agent_harness.config import (  # noqa: E402
     Config,
     ProjectInfo,
     SecurityConfig,
 )
-from ai_harness.result import (  # noqa: E402
+from agent_harness.result import (  # noqa: E402
     STATUS_BLOCKED,
     STATUS_FAILED,
     STATUS_PASSED,
     STATUS_SKIPPED,
     RunResult,
 )
-from ai_harness.runner import (  # noqa: E402
+from agent_harness.runner import (  # noqa: E402
     RunRequest,
     run_target,
 )
@@ -47,7 +47,7 @@ def _cfg(
 class RunStageTests(unittest.TestCase):
     def test_dry_run_does_not_execute(self) -> None:
         # If dry-run actually executed, this would create the file.
-        marker = "/tmp/ai_harness_runner_dryrun_marker"
+        marker = "/tmp/agent_harness_runner_dryrun_marker"
         if Path(marker).exists():
             Path(marker).unlink()
         cfg = _cfg(commands={"touch": [["python3", "-c", f"open('{marker}','w').close()"]]})
@@ -126,13 +126,13 @@ class RunWorkflowTests(unittest.TestCase):
                     "python3",
                     "-c",
                     (
-                        f"open('/tmp/ai_harness_order.log','a').write('{name}\\n'); "
+                        f"open('/tmp/agent_harness_order.log','a').write('{name}\\n'); "
                         f"import sys; sys.exit({exit_code})"
                     ),
                 ]
             ]
 
-        log_path = "/tmp/ai_harness_order.log"
+        log_path = "/tmp/agent_harness_order.log"
         if Path(log_path).exists():
             Path(log_path).unlink()
         cfg = _cfg(
@@ -171,7 +171,7 @@ class RunWorkflowTests(unittest.TestCase):
         self.assertEqual(outer.children[0].children[0].name, "a")
 
     def test_workflow_dry_run_skips_all(self) -> None:
-        marker = "/tmp/ai_harness_runner_wf_dryrun"
+        marker = "/tmp/agent_harness_runner_wf_dryrun"
         if Path(marker).exists():
             Path(marker).unlink()
         cfg = _cfg(
@@ -187,7 +187,7 @@ class RunWorkflowTests(unittest.TestCase):
 
 class ExitCodeTests(unittest.TestCase):
     def test_status_to_rc_mapping(self) -> None:
-        from ai_harness.policy import (
+        from agent_harness.policy import (
             EXIT_POLICY_BLOCKED,
             EXIT_STAGE_FAILED,
             EXIT_SUCCESS,
@@ -202,7 +202,7 @@ class ExitCodeTests(unittest.TestCase):
 
 class SubprocessErrorTests(unittest.TestCase):
     def test_timeout_returns_124(self) -> None:
-        from ai_harness.runner import _exec_one
+        from agent_harness.runner import _exec_one
 
         # 1s sleep killed at 0.1s timeout.
         status, code = _exec_one(
@@ -220,7 +220,7 @@ class SubprocessErrorTests(unittest.TestCase):
         import os
         import tempfile
 
-        from ai_harness.runner import _exec_one
+        from agent_harness.runner import _exec_one
 
         with tempfile.TemporaryDirectory() as d:
             fake = os.path.join(d, "fake-tool")

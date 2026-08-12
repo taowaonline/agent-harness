@@ -9,7 +9,7 @@ description: |
 
 input:
   prompt: |
-    I'm preparing a release candidate for my ai-harness project. I want
+    I'm preparing a release candidate for my agent-harness project. I want
     to run every gate the harness recommends before a release — format,
     lint, typecheck, unit tests, integration tests, full eval, and
     security — in the correct order. What single harness command do I

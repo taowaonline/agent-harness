@@ -67,7 +67,7 @@ module.
 - `harness` — executable entry point (no need to remember a Python module path)
 - `harness.toml` — this repository's own config
 - `harness.schema.json` — machine-readable config contract
-- `src/ai_harness/` — control plane implementation
+- `src/agent_harness/` — control plane implementation
 - `tests/` — unit, integration, and fixture-driven tests
 - `evals/` — datasets, graders, baselines, and generated reports
 - `profiles/` — copy-and-override profiles for languages, workloads, risk levels

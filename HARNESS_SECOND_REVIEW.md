@@ -26,7 +26,7 @@
 | P0.2 | `skipped → exit 0` | ⚠️ 仍存在 | `_status_to_rc` 映射 | 小 |
 | P0.3 | 无 SUT Runner 协议 | ⚠️ 仍存在 | `evals.py` 无 stdin/stdout | 大（V1.1） |
 | P0.4 | Profile 不自动合并 | ⚠️ 仍存在 | `config.py` 无 loader | 大（V1.2） |
-| P1.1 | `--strict` 死代码 | ⚠️ 仍存在 | `grep args.strict src/ai_harness/cli.py` → 空 | **极小** |
+| P1.1 | `--strict` 死代码 | ⚠️ 仍存在 | `grep args.strict src/agent_harness/cli.py` → 空 | **极小** |
 | P1.2 | `timeout`/`cost`/`repetitions` 不生效 | ⚠️ 仍存在 | `repetitions` 只在 dataclass | 中 |
 | P1.3 | `max_regression` 装饰 | ⚠️ 仍存在 | 仅 `_threshold_block` 展示 | **小** |
 | P1.5 | 秒级时间戳 → 同秒覆盖 | ⚠️ 仍存在 | `_persist_report` 用 `started_at` | **极小** |
@@ -58,7 +58,7 @@
 ```python
 sp.add_argument("--strict", action="store_true", help="Treat warnings as errors.")
 ```
-但 `_cmd_validate` **从不读 `args.strict`**。`grep -n "args.strict" src/ai_harness/cli.py` 返回空。
+但 `_cmd_validate` **从不读 `args.strict`**。`grep -n "args.strict" src/agent_harness/cli.py` 返回空。
 
 CI 用 `./harness validate --strict` 比用 `./harness validate` **看起来**更严格，实际**完全一样**。这是 trust 杀手。
 
@@ -225,15 +225,15 @@ grep -n "_CANONICAL_HOME" harness
 # → 20:_CANONICAL_HOME = "/Users/tommacmini4/Documents/code/harness"
 
 # P1.1 --strict 死代码
-grep -n "args.strict" src/ai_harness/cli.py
+grep -n "args.strict" src/agent_harness/cli.py
 # → (空)
 
 # P1.2 字段不生效
-grep -nE "repetitions|timeout_seconds|max_cost_usd" src/ai_harness/evals.py | grep -v dataclass | grep -v threshold_block
+grep -nE "repetitions|timeout_seconds|max_cost_usd" src/agent_harness/evals.py | grep -v dataclass | grep -v threshold_block
 # → (空，除了 dataclass 定义和展示)
 
 # P1.3 max_regression
-grep -n "max_regression" src/ai_harness/evals.py
+grep -n "max_regression" src/agent_harness/evals.py
 # → 508: 在 _threshold_block 里展示
 
 # P1.7 schema 矛盾

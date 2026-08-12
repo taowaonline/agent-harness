@@ -8,7 +8,7 @@ description: |
 
 input:
   prompt: |
-    I ran `./harness run check` on my ai-harness project. The typecheck
+    I ran `./harness run check` on my agent-harness project. The typecheck
     stage shows status `skipped` with reason "executable unavailable for
     optional stage". Did typecheck pass? How should I report this to my
     team — as success or as something else? Explain briefly.

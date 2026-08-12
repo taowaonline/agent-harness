@@ -3,7 +3,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "ai-harness"
+name = "agent-harness"
 version = "0.1.0"
 description = "Vendor-neutral control plane for AI-assisted development and AI application lifecycle."
 readme = "README.md"
@@ -17,13 +17,13 @@ dependencies = []
 dev = []
 
 [project.scripts]
-harness = "ai_harness.cli:main"
+harness = "agent_harness.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-ai_harness = ["py.typed"]
+agent_harness = ["py.typed"]
 
 # ─────────────────────────────────────────────────────────────────────
 # Ruff: format + lint. Used by [commands].format and [commands].lint in

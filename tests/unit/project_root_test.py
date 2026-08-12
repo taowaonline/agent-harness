@@ -15,8 +15,8 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.config import load_config  # noqa: E402
-from ai_harness.evals import load_dataset  # noqa: E402
+from agent_harness.config import load_config  # noqa: E402
+from agent_harness.evals import load_dataset  # noqa: E402
 
 
 class ProjectRootResolutionTests(unittest.TestCase):
@@ -66,7 +66,7 @@ dataset = "evals/datasets/smoke.jsonl"
         """Black-box: `harness validate --config <abs>` from /tmp must pass."""
         repo_root = HERE.parent.parent
         env = dict(os.environ)
-        # Ensure the harness script can find ai_harness (adjacent src/)
+        # Ensure the harness script can find agent_harness (adjacent src/)
         proc = subprocess.run(
             [
                 "python3",

@@ -1,4 +1,4 @@
-"""Unit tests for ai_harness.security and ai_harness.policy."""
+"""Unit tests for agent_harness.security and agent_harness.policy."""
 
 from __future__ import annotations
 
@@ -13,17 +13,17 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.config import (  # noqa: E402
+from agent_harness.config import (  # noqa: E402
     Config,
     ProjectInfo,
     SecurityConfig,
 )
-from ai_harness.policy import (  # noqa: E402
+from agent_harness.policy import (  # noqa: E402
     check_tool_allowed,
     check_write_requires_approval,
 )
-from ai_harness.result import STATUS_FAILED, STATUS_PASSED, RunResult  # noqa: E402
-from ai_harness.security import run_security_check  # noqa: E402
+from agent_harness.result import STATUS_FAILED, STATUS_PASSED, RunResult  # noqa: E402
+from agent_harness.security import run_security_check  # noqa: E402
 
 
 def _cfg(security: SecurityConfig | None = None) -> Config:

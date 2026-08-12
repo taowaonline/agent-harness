@@ -1,7 +1,7 @@
 version = 1
 
 [project]
-name = "ai-harness"
+name = "agent-harness"
 language = "python"
 workload = "agent"
 risk = "standard"
@@ -21,7 +21,7 @@ lint = [["ruff", "check", "."]]
 # Type check: pyright on the control-plane source. Tests are excluded
 # (they're covered by `test-unit`); pyright clean is enforced for src/
 # only.
-typecheck = [["pyright", "src/ai_harness"]]
+typecheck = [["pyright", "src/agent_harness"]]
 
 # Unit + integration tests via stdlib unittest.
 test-unit = [["python3", "-m", "unittest", "discover", "-s", "tests/unit", "-p", "*_test.py"]]

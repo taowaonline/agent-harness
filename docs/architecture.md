@@ -14,7 +14,7 @@ manager, CI platform, or deployment automation. Those are integration points.
 +---------------------------------------------------------------+
 | CLI  (./harness) — stable command semantics                   |
 +---------------------------------------------------------------+
-| Control plane  (src/ai_harness)                               |
+| Control plane  (src/agent_harness)                               |
 |   config  ·  runner  ·  result  ·  policy  ·  evals  ·        |
 |   redaction                                                   |
 +---------------------------------------------------------------+

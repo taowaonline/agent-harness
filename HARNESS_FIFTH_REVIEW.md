@@ -70,7 +70,7 @@ git status --short
 
 - `README.md`
 - `docs/architecture.md`
-- `src/ai_harness/` 下 CLI、配置、Runner、Eval、结果、安全、策略和脱敏实现
+- `src/agent_harness/` 下 CLI、配置、Runner、Eval、结果、安全、策略和脱敏实现
 - `harness.schema.json`
 - `tests/unit/` 与 `tests/integration/` 测试
 - `.github/workflows/ci.yml`
@@ -189,11 +189,11 @@ _CANONICAL_HOME = "/Users/tommacmini4/Documents/code/harness"
 - `harness.schema.json`；
 - 配置、数据集目录和 `.gitignore`。
 
-它没有复制 `src/ai_harness`，也没有写入固定版本的可安装依赖。因此初始化产物依赖：
+它没有复制 `src/agent_harness`，也没有写入固定版本的可安装依赖。因此初始化产物依赖：
 
 - 目标机仍有相同源码路径；或
 - 目标机通过 `HARNESS_HOME` 提供源码；或
-- 目标机已经安装 `ai_harness`。
+- 目标机已经安装 `agent_harness`。
 
 这不是一个自洽的 vendored project。
 

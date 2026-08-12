@@ -8,7 +8,7 @@ description: |
 
 input:
   prompt: |
-    This ai-harness project has its own harness.toml. I want to know
+    This agent-harness project has its own harness.toml. I want to know
     exactly which stages, workflows, and evals are configured in this
     specific repo — not the generic docs. Which single harness command
     shows me that, with config sources? Tell me the command, don't run.

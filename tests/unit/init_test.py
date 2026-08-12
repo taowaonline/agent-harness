@@ -13,13 +13,13 @@ SRC = HERE.parent.parent / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from ai_harness.cli import (  # noqa: E402
+from agent_harness.cli import (  # noqa: E402
     _dataset_paths_in_toml,
     _localize_dataset_paths,
     _override_toml_field,
     _render_init_toml,
 )
-from ai_harness.config import load_config  # noqa: E402
+from agent_harness.config import load_config  # noqa: E402
 
 REPO = HERE.parent.parent
 
@@ -106,7 +106,7 @@ class EndToEndInitTests(unittest.TestCase):
     """Run `harness init` end-to-end in a tempdir, then validate."""
 
     def _run_init(self, cwd: Path, *args: str) -> int:
-        from ai_harness.cli import main
+        from agent_harness.cli import main
 
         old = os.getcwd()
         os.chdir(cwd)

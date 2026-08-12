@@ -8,7 +8,7 @@ description: |
 
 input:
   prompt: |
-    I'm about to refactor the eval pipeline of my ai-harness project
+    I'm about to refactor the eval pipeline of my agent-harness project
     (rename a stage, update a dataset path). Before I edit harness.toml
     and run tests, what's the safest single harness command to confirm
     the current config is well-formed? Give the command, don't run it.
