@@ -16,9 +16,9 @@ a test, eval case, or manual step. Link the issue if applicable. -->
 change affects AI behavior. Do not paste secrets. -->
 
 ```bash
-./harness validate
-./harness run check
-./harness eval smoke --offline
+./agent_harness validate
+./agent_harness run check
+./agent_harness eval smoke --offline
 ```
 
 ## AI behavior change
@@ -37,7 +37,7 @@ accompany the change. -->
 <!-- If you ran `eval full` before and after, paste the comparison. -->
 
 ```bash
-./harness baseline compare evals/baselines/<prev>.json evals/reports/<new>.json
+./agent_harness baseline compare evals/baselines/<prev>.json evals/reports/<new>.json
 ```
 
 ## Safety / privacy / cost / latency impact

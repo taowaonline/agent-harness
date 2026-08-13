@@ -50,12 +50,12 @@ mental model.
 ## Quick start
 
 ```bash
-./harness doctor
-./harness validate
-./harness list
-./harness run check --dry-run
-./harness run check
-./harness eval smoke --offline
+./agent_harness doctor
+./agent_harness validate
+./agent_harness list
+./agent_harness run check --dry-run
+./agent_harness run check
+./agent_harness eval smoke --offline
 ```
 
 The control plane is implemented in Python 3.11+ standard library only — no

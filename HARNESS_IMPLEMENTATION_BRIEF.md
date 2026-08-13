@@ -223,21 +223,21 @@ require_approval_for = ["external_write", "delete", "payment", "deploy"]
 至少实现：
 
 ```bash
-./harness doctor
-./harness validate
-./harness list
-./harness run <stage-or-workflow>
-./harness run <stage-or-workflow> --dry-run
-./harness run <stage-or-workflow> --json
-./harness eval <smoke|full> --offline
+./agent_harness doctor
+./agent_harness validate
+./agent_harness list
+./agent_harness run <stage-or-workflow>
+./agent_harness run <stage-or-workflow> --dry-run
+./agent_harness run <stage-or-workflow> --json
+./agent_harness eval <smoke|full> --offline
 ```
 
 建议但非强制：
 
 ```bash
-./harness init --language python --workload rag --risk standard
-./harness explain <stage-or-policy>
-./harness baseline compare <report-a> <report-b>
+./agent_harness init --language python --workload rag --risk standard
+./agent_harness explain <stage-or-policy>
+./agent_harness baseline compare <report-a> <report-b>
 ```
 
 每次执行产生结构化结果，至少包含：
@@ -267,7 +267,7 @@ require_approval_for = ["external_write", "delete", "payment", "deploy"]
 - 先明确验收标准；复杂任务先给出短计划。
 - 只修改任务范围内的文件，保留用户已有变更。
 - 优先小步、可审查的 Diff，不做无关重构。
-- 不猜测命令，通过 `./harness list` 或文档获取入口。
+- 不猜测命令，通过 `./agent_harness list` 或文档获取入口。
 - 完成前运行与变更风险相匹配的 Harness 检查。
 - 不读取、提交或打印秘密信息。
 - 不绕过失败测试、质量阈值、人工批准和发布门禁。
@@ -561,12 +561,12 @@ Harness 控制面至少测试：
 
 以下条件全部满足才算完成：
 
-- [ ] `./harness --help` 清晰列出稳定命令。
-- [ ] `./harness doctor` 在当前仓库给出可操作的诊断。
-- [ ] `./harness validate` 成功校验本仓库和所有示例配置。
-- [ ] `./harness list` 显示阶段、工作流和配置来源。
-- [ ] `./harness run check --dry-run` 不执行子进程且展示正确顺序。
-- [ ] `./harness eval smoke --offline` 使用 Fixture 生成确定性报告。
+- [ ] `./agent_harness --help` 清晰列出稳定命令。
+- [ ] `./agent_harness doctor` 在当前仓库给出可操作的诊断。
+- [ ] `./agent_harness validate` 成功校验本仓库和所有示例配置。
+- [ ] `./agent_harness list` 显示阶段、工作流和配置来源。
+- [ ] `./agent_harness run check --dry-run` 不执行子进程且展示正确顺序。
+- [ ] `./agent_harness eval smoke --offline` 使用 Fixture 生成确定性报告。
 - [ ] 不设置任何模型 API Key，也能执行全部 Harness 自身测试。
 - [ ] 至少包含 Python、TypeScript、Go、Rust、JVM、.NET Profiles。
 - [ ] 至少包含 Chat、RAG、Agent、Extraction Profiles。

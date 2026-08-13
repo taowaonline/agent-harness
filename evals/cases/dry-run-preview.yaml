@@ -1,13 +1,13 @@
 id: dry-run-preview
 title: Preview stage order with --dry-run before executing
 description: |
-  Agent checklist item 3: use `./harness run <stage> --dry-run` to
+  Agent checklist item 3: use `./agent_harness run <stage> --dry-run` to
   preview what will execute. The Agent should propose --dry-run when
   the user wants to inspect order or argv before any side effect.
 
 input:
   prompt: |
-    I'm nervous about running `./harness run release-check` for the first
+    I'm nervous about running `./agent_harness run release-check` for the first
     time on this repo — I want to see exactly what stages and commands
     would run, in order, without any subprocess actually starting. What
     harness invocation gives me that preview? Give the command, don't run.

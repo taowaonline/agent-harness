@@ -70,7 +70,7 @@ dataset = "evals/datasets/smoke.jsonl"
         proc = subprocess.run(
             [
                 "python3",
-                str(repo_root / "harness"),
+                str(repo_root / "agent_harness"),
                 "validate",
                 "--config",
                 str(self.proj / "harness.toml"),

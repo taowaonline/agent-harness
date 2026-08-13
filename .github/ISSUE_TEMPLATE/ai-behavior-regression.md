@@ -26,7 +26,7 @@ failing output class. -->
 ## Baseline comparison
 
 ```bash
-./harness baseline compare evals/baselines/<prev>.json evals/reports/<new>.json
+./agent_harness baseline compare evals/baselines/<prev>.json evals/reports/<new>.json
 ```
 
 ## Proposed remediation

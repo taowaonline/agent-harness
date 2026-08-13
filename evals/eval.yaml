@@ -6,7 +6,7 @@ schema_version: v1alpha1
 # correctly:
 #   1) recommends doctor when toolchain is uncertain
 #   2) recommends validate before changes
-#   3) uses ./harness list to discover commands (not guess)
+#   3) uses ./agent_harness list to discover commands (not guess)
 #   4) uses --dry-run to preview
 #   5) reports skipped as skipped, never as passed
 #   6) defaults to offline eval

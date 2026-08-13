@@ -74,6 +74,6 @@ To turn a production failure into a regression sample:
 3. Extract the input and the expected corrected output.
 4. Add the case to the appropriate dataset with
    `metadata.source = "production-feedback"` and a date stamp.
-5. Run `./harness eval smoke --offline` to confirm the new sample is
+5. Run `./agent_harness eval smoke --offline` to confirm the new sample is
    well-formed.
 6. Open a PR with the new case — dataset changes are reviewed like code.

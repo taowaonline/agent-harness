@@ -1,13 +1,13 @@
 """Harness CLI entry point.
 
 Stable commands:
-    ./harness doctor
-    ./harness validate
-    ./harness list
-    ./harness run <stage-or-workflow> [--dry-run] [--json]
-    ./harness eval <smoke|full> [--offline] [--json]
-    ./harness baseline compare <report-a> <report-b>
-    ./harness explain <topic>
+    ./agent_harness doctor
+    ./agent_harness validate
+    ./agent_harness list
+    ./agent_harness run <stage-or-workflow> [--dry-run] [--json]
+    ./agent_harness eval <smoke|full> [--offline] [--json]
+    ./agent_harness baseline compare <report-a> <report-b>
+    ./agent_harness explain <topic>
 """
 
 from __future__ import annotations
@@ -66,13 +66,13 @@ def main(argv: list[str] | None = None) -> int:
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="harness",
+        prog="agent_harness",
         description=(
             "Vendor-neutral control plane for AI-assisted development and "
             "AI application lifecycle management."
         ),
     )
-    p.add_argument("--version", action="version", version=f"harness {__version__}")
+    p.add_argument("--version", action="version", version=f"agent_harness {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sp = sub.add_parser("doctor", help="Check harness, config, and toolchain.")
@@ -460,13 +460,13 @@ def _cmd_init(args: argparse.Namespace) -> int:
     actions: list[str] = []
 
     # 1. Copy executable entry point and schema.
-    src_exe = home / "harness"
+    src_exe = home / "agent_harness"
     src_schema = home / "harness.schema.json"
     if not src_exe.exists():
         result.add_error(f"harness source missing: {src_exe}")
         result.status = STATUS_FAILED
         return _emit(result, args.json_output)
-    dst_exe = cwd / "harness"
+    dst_exe = cwd / "agent_harness"
     dst_schema = cwd / "harness.schema.json"
     dst_exe.write_bytes(src_exe.read_bytes())
     dst_exe.chmod(0o755)
@@ -581,18 +581,18 @@ def _cmd_init(args: argparse.Namespace) -> int:
     result.summary["actions"] = actions
     install_hint = (
         "Project is self-contained (vendored src/agent_harness/); "
-        "./harness works without HARNESS_HOME."
+        "./agent_harness works without HARNESS_HOME."
         if args.vendor
         else "Install the harness CLI globally (see agent_harness README) or "
-        "set HARNESS_HOME; the ./harness entry alone is not self-contained."
+        "set HARNESS_HOME; the ./agent_harness entry alone is not self-contained."
     )
     result.summary["next_steps"] = [
         "Edit harness.toml: name, dataset paths, [commands] for your tools.",
         "Replace evals/datasets/smoke.example.jsonl with your real samples.",
         install_hint,
-        "Run ./harness doctor (or `harness doctor` if global) to verify toolchain.",
-        "Run ./harness run check (or `harness run check`) to run project checks.",
-        "Run ./harness eval smoke --offline for offline AI eval.",
+        "Run ./agent_harness doctor (or `harness doctor` if global) to verify toolchain.",
+        "Run ./agent_harness run check (or `harness run check`) to run project checks.",
+        "Run ./agent_harness eval smoke --offline for offline AI eval.",
     ]
     result.summary["project"] = {
         "name": name,
@@ -614,8 +614,8 @@ A baseline is a frozen eval report used as a regression reference. Promote
 a report deliberately:
 
 ```bash
-./harness eval full --offline
-./harness baseline compare evals/baselines/latest.json "$(ls -t evals/reports/full-*.json | head -1)"
+./agent_harness eval full --offline
+./agent_harness baseline compare evals/baselines/latest.json "$(ls -t evals/reports/full-*.json | head -1)"
 cp "$(ls -t evals/reports/full-*.json | head -1)" evals/baselines/latest.json
 git add evals/baselines/latest.json && git commit -m "baseline: bump"
 ```
@@ -764,7 +764,7 @@ def _find_example_for(*, language: str, workload: str, home: Path) -> Path | Non
     if (direct / "harness.toml").exists():
         return direct / "harness.toml"
     # Fall back to any example for that language.
-    for p in sorted(examples.glob(f"{language}-*/harness.toml")):
+    for p in sorted(examples.glob(f"{language}-./agent_harness.toml")):
         return p
     return None
 
@@ -863,7 +863,7 @@ _EXPLANATIONS: dict[str, str] = {
     "doctor": (
         "`doctor` checks that the harness, the project config, and the "
         "declared toolchain are usable. It does not run project checks — "
-        "use `./harness run check` for that."
+        "use `./agent_harness run check` for that."
     ),
     "validate": (
         "`validate` parses harness.toml against the schema, checks that "

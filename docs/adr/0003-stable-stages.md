@@ -21,7 +21,7 @@ may override.
 
 ## Consequences
 
-- **Pro:** A coding Agent or CI workflow can call `./harness run check`
+- **Pro:** A coding Agent or CI workflow can call `./agent_harness run check`
   without knowing the target language.
 - **Pro:** Profile snippets under `profiles/languages/` are
   copy-and-paste; no forking of the core.

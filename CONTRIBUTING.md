@@ -23,7 +23,7 @@ than approximating completion.
 
 1. Open or claim an issue. Link it from the PR description.
 2. Branch from `main`. Keep diffs small and reviewable.
-3. Run `./harness validate` and `./harness run check` locally.
+3. Run `./agent_harness validate` and `./agent_harness run check` locally.
 4. Open a PR using `.github/pull_request_template.md`.
 5. Address review comments inline. Do not force-push history that
    reviewers are actively reading unless asked.

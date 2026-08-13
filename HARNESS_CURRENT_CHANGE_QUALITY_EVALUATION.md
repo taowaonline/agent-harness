@@ -53,7 +53,7 @@
 
 #### CLI 契约和结果语义清晰
 
-`./harness list` 暴露稳定 stage/workflow 名称，`doctor`、`validate`、`run`、`eval`、`baseline compare` 等命令职责清楚。当前实现对 skipped 语义进行了较完整的收紧：
+`./agent_harness list` 暴露稳定 stage/workflow 名称，`doctor`、`validate`、`run`、`eval`、`baseline compare` 等命令职责清楚。当前实现对 skipped 语义进行了较完整的收紧：
 
 - dry-run 顶层状态为 `skipped`；
 - workflow 中出现 partial skip 时顶层不会伪装为 `passed`；
@@ -95,19 +95,19 @@ runner 使用 argv 数组并显式 `shell=False`，同时对以下异常进行�
 
 | 命令 | 结果 | 关键证据 |
 |---|---|---|
-| `./harness validate` | 通过（带 advisory warning） | 配置、workflow、dataset 可加载；两个 `max_cost_usd` 为 `PLANNED` 警告 |
-| `./harness run check` | 通过 | `lint` 通过，`test-unit` 通过 |
-| `./harness eval smoke --offline` | 通过 | 8/8，pass rate 1.0，skipped 0，failed 0 |
-| `./harness eval full --offline` | 通过 | 10/10，pass rate 1.0，skipped 0，failed 0 |
-| `./harness baseline compare evals/baselines/latest.json evals/reports/full-20260810T033207Z-e903de7d.json` | 通过 | delta 0.0，regression 0.0，verdict `unchanged` |
-| `./harness run release-check --json` | 通过 | check、integration、full、security 全部通过 |
+| `./agent_harness validate` | 通过（带 advisory warning） | 配置、workflow、dataset 可加载；两个 `max_cost_usd` 为 `PLANNED` 警告 |
+| `./agent_harness run check` | 通过 | `lint` 通过，`test-unit` 通过 |
+| `./agent_harness eval smoke --offline` | 通过 | 8/8，pass rate 1.0，skipped 0，failed 0 |
+| `./agent_harness eval full --offline` | 通过 | 10/10，pass rate 1.0，skipped 0，failed 0 |
+| `./agent_harness baseline compare evals/baselines/latest.json evals/reports/full-20260810T033207Z-e903de7d.json` | 通过 | delta 0.0，regression 0.0，verdict `unchanged` |
+| `./agent_harness run release-check --json` | 通过 | check、integration、full、security 全部通过 |
 | `python3 -m unittest discover -s tests -p '*_test.py' -v` | 通过 | Ran 162 tests；OK |
 
 最新 full 报告：[`evals/reports/full-20260810T033207Z-e903de7d.json`](evals/reports/full-20260810T033207Z-e903de7d.json)。该报告记录 git SHA `8ecbd02`，因此与本次评估对象一致。
 
 ### 4.2 环境和工具链边界
 
-`./harness doctor --json` 显示：
+`./agent_harness doctor --json` 显示：
 
 - 必需的 `python3`、`git` 可用；
 - 当前项目配置的 command 均可解析；
@@ -123,7 +123,7 @@ runner 使用 argv 数组并显式 `shell=False`，同时对以下异常进行�
 
 证据：[`harness.toml`](harness.toml) 中定义了 `format`、`lint`、`typecheck`、`test-unit`、`test-integration`，但 `check` 只执行 `lint` 和 `test-unit`。`typecheck = []` 也意味着类型检查当前明确未配置。
 
-影响：开发者执行最常用的 `./harness run check` 时，不会得到格式化检查、类型检查或集成测试结果；若 CI 只复用 check，也可能形成质量门禁盲区。
+影响：开发者执行最常用的 `./agent_harness run check` 时，不会得到格式化检查、类型检查或集成测试结果；若 CI 只复用 check，也可能形成质量门禁盲区。
 
 建议：
 
@@ -221,12 +221,12 @@ smoke/full 使用仓库内 example dataset 的 fixture output，结果稳定且�
 
 - [x] 已读取仓库契约、README、架构说明、评测说明和覆盖相关区域的测试；
 - [x] 已审查当前累计改动范围和工作树状态；
-- [x] 已执行 `./harness validate`；
-- [x] 已执行 `./harness run check`；
-- [x] 已执行 `./harness eval smoke --offline`；
-- [x] 已执行 `./harness eval full --offline`；
+- [x] 已执行 `./agent_harness validate`；
+- [x] 已执行 `./agent_harness run check`；
+- [x] 已执行 `./agent_harness eval smoke --offline`；
+- [x] 已执行 `./agent_harness eval full --offline`；
 - [x] 已执行 baseline compare；
-- [x] 已执行 `./harness run release-check --json`；
+- [x] 已执行 `./agent_harness run release-check --json`；
 - [x] 已执行全量 unittest，共 162 个测试；
 - [x] 文稿明确记录 passed、warning、未配置工具和离线评测边界；
 - [ ] R1/R2/R3 尚未在本次任务中实施，属于后续改进项。
@@ -248,13 +248,13 @@ smoke/full 使用仓库内 example dataset 的 fixture output，结果稳定且�
 
 | 命令 | 结果 | 证据 |
 |---|---|---|
-| `./harness doctor --json` | 通过 | ruff、pyright、pytest、uv、node 均可用，所有声明 command 可解析 |
-| `./harness validate` | 通过（2 条 advisory） | smoke/full 无 runner，因此 max cost 明确为 `PLANNED (not enforced)` |
-| `./harness run check --json` | 串行通过 | format、lint、typecheck、test-unit 全部 passed |
-| `./harness eval smoke --offline --json` | 通过 | 8/8，pass rate 1.0，skipped 0 |
-| `./harness eval full --offline --json` | 通过 | 10/10，pass rate 1.0，skipped 0 |
-| `./harness baseline compare ...` | 通过 | pass-rate delta 0.0，regression 0.0，verdict `unchanged` |
-| `./harness run release-check --json` | 串行通过 | check、integration、full、security 全部 passed |
+| `./agent_harness doctor --json` | 通过 | ruff、pyright、pytest、uv、node 均可用，所有声明 command 可解析 |
+| `./agent_harness validate` | 通过（2 条 advisory） | smoke/full 无 runner，因此 max cost 明确为 `PLANNED (not enforced)` |
+| `./agent_harness run check --json` | 串行通过 | format、lint、typecheck、test-unit 全部 passed |
+| `./agent_harness eval smoke --offline --json` | 通过 | 8/8，pass rate 1.0，skipped 0 |
+| `./agent_harness eval full --offline --json` | 通过 | 10/10，pass rate 1.0，skipped 0 |
+| `./agent_harness baseline compare ...` | 通过 | pass-rate delta 0.0，regression 0.0，verdict `unchanged` |
+| `./agent_harness run release-check --json` | 串行通过 | check、integration、full、security 全部 passed |
 | `python3 -m unittest discover -s tests/unit -p '*_test.py' -v` | 通过 | 156 tests；OK |
 
 本次复评 full 报告为 [`evals/reports/full-20260810T042056Z-9d6fc3e4.json`](evals/reports/full-20260810T042056Z-9d6fc3e4.json)，记录 git SHA `33dac33`。
@@ -283,13 +283,13 @@ smoke/full 使用仓库内 example dataset 的 fixture output，结果稳定且�
 
 | 命令 | 结果 | 证据 |
 |---|---|---|
-| `./harness doctor --json` | 通过 | ruff、pyright、pytest、uv、node 可用；所有声明 command 可解析 |
-| `./harness validate` | 通过（2 条 advisory） | 当前仓库 smoke/full 没有 runner，成本字段明确显示 `PLANNED (not enforced)` |
-| `./harness run check --json` | 通过 | Ruff format、Ruff lint、Pyright、unit tests 全部通过 |
-| `./harness eval smoke --offline --json` | 通过 | 8/8，pass rate 1.0，skipped 0，failed 0 |
-| `./harness eval full --offline --json` | 通过 | 10/10，pass rate 1.0，skipped 0，failed 0 |
-| `./harness baseline compare evals/baselines/latest.json <latest-full>` | 通过 | pass-rate delta 0.0，regression 0.0，verdict `unchanged` |
-| `./harness run release-check --json` | 通过 | check、integration、full、security 全部 passed |
+| `./agent_harness doctor --json` | 通过 | ruff、pyright、pytest、uv、node 可用；所有声明 command 可解析 |
+| `./agent_harness validate` | 通过（2 条 advisory） | 当前仓库 smoke/full 没有 runner，成本字段明确显示 `PLANNED (not enforced)` |
+| `./agent_harness run check --json` | 通过 | Ruff format、Ruff lint、Pyright、unit tests 全部通过 |
+| `./agent_harness eval smoke --offline --json` | 通过 | 8/8，pass rate 1.0，skipped 0，failed 0 |
+| `./agent_harness eval full --offline --json` | 通过 | 10/10，pass rate 1.0，skipped 0，failed 0 |
+| `./agent_harness baseline compare evals/baselines/latest.json <latest-full>` | 通过 | pass-rate delta 0.0，regression 0.0，verdict `unchanged` |
+| `./agent_harness run release-check --json` | 通过 | check、integration、full、security 全部 passed |
 | `python3 -m unittest discover -s tests -p '*_test.py' -q` | 通过 | 172 tests；OK |
 
 本轮 full 报告为 [`evals/reports/full-20260810T044608Z-4aafedb8.json`](evals/reports/full-20260810T044608Z-4aafedb8.json)，记录当前 SHA `e5f4c70`。

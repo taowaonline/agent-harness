@@ -27,28 +27,28 @@ $ python3 -m unittest discover -s tests/unit -p '*_test.py'
 Ran 90 tests in 0.454s
 OK
 
-$ ./harness validate
+$ ./agent_harness validate
 [validate] passed
   summary: {"validated": {"commands": [...6 stages], "evals": ["full", "smoke"], ...}}
 
-$ ./harness validate --strict --json
+$ ./agent_harness validate --strict --json
 status: passed
 （注意：--strict 与不加 --strict 输出完全一致，见 §三 P1-1）
 
-$ ./harness run check
+$ ./agent_harness run check
 [run] passed
   - check [workflow] passed
     - lint [command] passed
     - test-unit [command] passed
 
-$ ./harness eval smoke --offline
+$ ./agent_harness eval smoke --offline
 [eval] passed
   - smoke [eval] passed
 
-$ ./harness eval full --offline
+$ ./agent_harness eval full --offline
 [eval] passed
 
-$ ./harness run release-check
+$ ./agent_harness run release-check
 [run] passed
   - release-check [workflow] passed
 ```
@@ -64,7 +64,7 @@ $ ./harness run release-check
 ### B1. `skipped` 仍可被顶层报告为 `passed`
 
 ```text
-$ ./harness run typecheck --dry-run --json | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['status'])"
+$ ./agent_harness run typecheck --dry-run --json | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['status'])"
 passed
 ```
 
@@ -190,13 +190,13 @@ cd /Users/tommacmini4/Documents/code/harness   # 或 clone 后的等价路径
 
 # 可运行性
 python3 -m unittest discover -s tests/unit -p '*_test.py'
-./harness validate
-./harness run check
-./harness eval smoke --offline
-./harness run release-check
+./agent_harness validate
+./agent_harness run check
+./agent_harness eval smoke --offline
+./agent_harness run release-check
 
 # Bug 复现
-./harness run typecheck --dry-run --json | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])"
+./agent_harness run typecheck --dry-run --json | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])"
 grep -n "_CANONICAL_HOME" harness
 grep -c "args.strict" src/agent_harness/cli.py
 cd /tmp && harness validate --config /Users/tommacmini4/Documents/code/harness/harness.toml

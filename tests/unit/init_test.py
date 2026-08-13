@@ -134,7 +134,7 @@ class EndToEndInitTests(unittest.TestCase):
         )
         self.assertEqual(rc, 0)
         # Generated layout.
-        self.assertTrue((self.dir / "harness").exists())
+        self.assertTrue((self.dir / "agent_harness").exists())
         self.assertTrue((self.dir / "harness.toml").exists())
         self.assertTrue((self.dir / "harness.schema.json").exists())
         self.assertTrue((self.dir / "evals/datasets/smoke.example.jsonl").exists())

@@ -1,8 +1,8 @@
 id: validate-before-change
-title: Before proposing changes → run ./harness validate
+title: Before proposing changes → run ./agent_harness validate
 description: |
   SKILL.md Agent checklist item 2: before proposing a change to a project
-  that has a harness.toml, run `./harness validate` to confirm config and
+  that has a harness.toml, run `./agent_harness validate` to confirm config and
   datasets are well-formed. The Agent should not skip this step or
   substitute ad-hoc TOML parsing.
 
@@ -15,10 +15,10 @@ input:
 
 expect:
   must_contain:
-    - "./harness validate"
+    - "./agent_harness validate"
 
 judge:
   type: rule_based
   success:
     - output_contains:
-        all: ["./harness validate"]
+        all: ["./agent_harness validate"]

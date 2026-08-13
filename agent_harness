@@ -37,7 +37,7 @@ def _bootstrap() -> int:
         from agent_harness.cli import main
     except ImportError as e:
         sys.stderr.write(
-            f"harness: cannot find agent_harness package ({e}).\n"
+            f"agent_harness: cannot find agent_harness package ({e}).\n"
             f"\n"
             f"One of these must hold:\n"
             f"  - Run from a checkout that has ./src/agent_harness/ next to this script\n"

@@ -27,13 +27,13 @@
 python3 -m unittest discover -s tests -p '*_test.py'
 → exit 0，测试通过
 
-./harness validate --strict --json
+./agent_harness validate --strict --json
 → exit 0，status=passed
 
-./harness eval smoke --offline --json
+./agent_harness eval smoke --offline --json
 → exit 0，8/8 passed，pass_rate=1.0
 
-./harness run release-check --json
+./agent_harness run release-check --json
 → exit 0，status=passed
 
 git diff --check

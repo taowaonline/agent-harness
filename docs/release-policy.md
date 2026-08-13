@@ -18,8 +18,8 @@ PR checks
 
 | Stage | Owner | Trigger | Gate |
 |---|---|---|---|
-| PR checks | Author | Every PR | `./harness run check` |
-| Full eval | Release manager | `workflow_dispatch` or schedule | `./harness eval full` |
+| PR checks | Author | Every PR | `./agent_harness run check` |
+| Full eval | Release manager | `workflow_dispatch` or schedule | `./agent_harness eval full` |
 | Staging / shadow | Platform | Automatic after eval | SLO + quality gate |
 | Human approval | Release manager | For `standard` and `high-risk` profiles | Explicit |
 | Canary | Platform | After approval | Error rate / quality / cost |

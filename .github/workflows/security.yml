@@ -65,7 +65,7 @@ jobs:
           python-version: "3.11"
 
       - name: Harness built-in security check
-        run: ./harness run security
+        run: ./agent_harness run security
 
       - name: Install gitleaks (standard + high-risk)
         if: needs.detect-risk.outputs.risk != 'prototype'

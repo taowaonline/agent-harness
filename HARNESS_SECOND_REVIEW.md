@@ -60,7 +60,7 @@ sp.add_argument("--strict", action="store_true", help="Treat warnings as errors.
 ```
 但 `_cmd_validate` **从不读 `args.strict`**。`grep -n "args.strict" src/agent_harness/cli.py` 返回空。
 
-CI 用 `./harness validate --strict` 比用 `./harness validate` **看起来**更严格，实际**完全一样**。这是 trust 杀手。
+CI 用 `./agent_harness validate --strict` 比用 `./agent_harness validate` **看起来**更严格，实际**完全一样**。这是 trust 杀手。
 
 **最小修法**（如果不想真做 warnings，就删 flag）：
 
@@ -108,7 +108,7 @@ repetitions = 3
 `compare_reports` 算 delta，CLI 在任何 `regression > 0` 时失败，无视 toml 里 `max_regression = 0.02`。
 
 ```bash
-./harness baseline compare a.json b.json
+./agent_harness baseline compare a.json b.json
 # regression = 0.001 → 失败
 # regression = 0.5 → 失败（一样）
 # 配置 max_regression = 0.02 → 被无视

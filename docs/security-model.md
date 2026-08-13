@@ -25,7 +25,7 @@ security boundaries enforced by the harness.
 ## Permission model
 
 Permissions are *per-action-kind*, not a single `admin=true` flag. The
-harness recognizes:
+agent_harness recognizes:
 
 | Kind | Default | What it covers |
 |---|---|---|

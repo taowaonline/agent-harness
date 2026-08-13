@@ -23,7 +23,7 @@ labels: ["bug", "needs-triage"]
 secrets before pasting. -->
 
 ```
-./harness ...
+./agent_harness ...
 ```
 
 ## Severity and blast radius

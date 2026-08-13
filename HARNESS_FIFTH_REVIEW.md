@@ -81,31 +81,31 @@ git status --short
 ### 3.2 本地命令结果
 
 ```text
-./harness doctor --json
+./agent_harness doctor --json
 → exit 0，status=passed
 → smoke dataset 8 cases，full dataset 10 cases
 → python3、git 可用
 
-./harness validate --json
+./agent_harness validate --json
 → exit 0，status=passed
 
-./harness list --json
+./agent_harness list --json
 → exit 0，列出 6 个 stages、2 个 workflows、2 个 evals
 
-./harness run check --json
+./agent_harness run check --json
 → exit 0，status=passed
 → compileall 通过，unit tests 通过
 
-./harness run check --dry-run --json
+./agent_harness run check --dry-run --json
 → exit 0，但顶层 status=passed，子阶段 status=skipped
 
-./harness eval smoke --offline --json
+./agent_harness eval smoke --offline --json
 → exit 0，8/8 passed，pass_rate=1.0
 
-./harness eval full --offline --json
+./agent_harness eval full --offline --json
 → exit 0，10/10 passed，pass_rate=1.0
 
-./harness run release-check --json
+./agent_harness run release-check --json
 → exit 0，check、integration、full eval、security 全部通过
 
 python3 -m unittest discover -s tests -p '*_test.py'
@@ -146,7 +146,7 @@ skill-up --version
 执行：
 
 ```text
-./harness run check --dry-run --json
+./agent_harness run check --dry-run --json
 ```
 
 结果中同时出现：
@@ -230,13 +230,13 @@ runner = ["python3", "tests/fixtures/fake_provider.py"]
 本轮分别执行：
 
 ```text
-./harness validate --json
-./harness validate --strict --json
+./agent_harness validate --json
+./agent_harness validate --strict --json
 ```
 
 剔除 `run_id`、`started_at` 和 `duration_ms` 后，两份 JSON 完全相同，均为 `status=passed`。
 
-CLI 注册了 `--strict`，但 `_cmd_validate` 没有读取 `args.strict`，也没有 warnings 集合。当前 CI 使用 `./harness validate --strict`，实际没有额外门禁。
+CLI 注册了 `--strict`，但 `_cmd_validate` 没有读取 `args.strict`，也没有 warnings 集合。当前 CI 使用 `./agent_harness validate --strict`，实际没有额外门禁。
 
 建议实现 warnings/strict，或删除该参数并同步 CI 和文档。
 

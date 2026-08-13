@@ -17,7 +17,7 @@ dependencies = []
 dev = []
 
 [project.scripts]
-harness = "agent_harness.cli:main"
+agent_harness = "agent_harness.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

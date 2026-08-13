@@ -36,17 +36,17 @@
 **实施处置**：实施时按"阶段 A→B→C→D→E"切片推进（[HARNESS_IMPLEMENTATION_BRIEF.md](./HARNESS_IMPLEMENTATION_BRIEF.md) §15），每阶段完成即跑测试。最终 V0 闭环：
 
 ```bash
-./harness validate            # 配置合法
-./harness eval smoke --offline  # JSONL fixture + grader 跑通
-./harness run check --dry-run # 不产生副作用
-./harness run release-check   # 全套门禁绿
+./agent_harness validate            # 配置合法
+./agent_harness eval smoke --offline  # JSONL fixture + grader 跑通
+./agent_harness run check --dry-run # 不产生副作用
+./agent_harness run release-check   # 全套门禁绿
 ```
 
 **遗留**：无。这一项已闭环。
 
 ### P0.2 "本仓库"和"被测项目"边界不清
 
-**原批评**：当前仓库既当 Harness 控制面又当完整 AI 项目，应该支持 `./harness --project <path> ...`。
+**原批评**：当前仓库既当 Harness 控制面又当完整 AI 项目，应该支持 `./agent_harness --project <path> ...`。
 **实施处置**：未实现 `--project` flag。当前模型：`harness.toml` 在 cwd 是契约；要操作别的项目，`cd` 过去或用 `--config <path>`。
 **实际影响**：
 - 单机多项目复用：`cd` 可解决，麻烦但不阻塞。
@@ -160,7 +160,7 @@ V1 应明确支持其一。
 
 ### N6. harness eval 和 skill-up eval 是两套系统
 
-harness 用 JSONL + deterministic grader；skill-up 用 YAML + rule_based/agent_judge。两者各有所长但**无桥接**。Local_CICD 项目同时有：
+agent_harness 用 JSONL + deterministic grader；skill-up 用 YAML + rule_based/agent_judge。两者各有所长但**无桥接**。Local_CICD 项目同时有：
 - `evals/datasets/*.jsonl`（harness 用）—— 实际是 init seed 的占位
 - `evals/cases/*.yaml` + `evals/eval.yaml`（skill-up 用）—— 真正在跑的 Agent 决策测试
 
@@ -177,7 +177,7 @@ harness 用 JSONL + deterministic grader；skill-up 用 YAML + rule_based/agent_
 定义 stdin/stdout JSONL 协议，让被测系统任意语言：
 
 ```text
-harness 启动 runner 子进程
+agent_harness 启动 runner 子进程
   → 通过 stdin 发送 Eval Case JSON（每行一条）
   → 通过 stdout 接收 Eval Result JSON（每行一条）
   → stderr 仅写诊断（自动 redact）
@@ -226,10 +226,10 @@ treat_all_skipped_as = "passed" | "failed" | "warn"
 #### V1.5 Doctor 拆分（解决 P1.2）
 
 ```bash
-./harness doctor                # 当前行为
-./harness doctor --harness      # 只查控制面（python3、harness 自身）
-./harness doctor --project      # 只查项目命令（flutter/ruff/tsc 等）
-./harness doctor --online       # 探测 model provider connectivity（默认不跑）
+./agent_harness doctor                # 当前行为
+./agent_harness doctor --harness      # 只查控制面（python3、harness 自身）
+./agent_harness doctor --project      # 只查项目命令（flutter/ruff/tsc 等）
+./agent_harness doctor --online       # 探测 model provider connectivity（默认不跑）
 ```
 
 #### V1.6 Shell profile（解决 N4）
@@ -262,8 +262,8 @@ test-unit = [["bats", "tests/"]]
 
 原批评建议把"文件存在型"验收改成"行为型"。实施后实际验证：
 
-- [x] 干净环境跑 `./harness validate` 成功，不要求在线密钥
-- [x] `./harness eval smoke --offline` 真正处理 fixture（至少 5 条）
+- [x] 干净环境跑 `./agent_harness validate` 成功，不要求在线密钥
+- [x] `./agent_harness eval smoke --offline` 真正处理 fixture（至少 5 条）
 - [x] 修改 fixture 使其失败时，命令返回非零退出码（`tests/unit/evals_test.py::RunEvalTests::test_offline_eval_fails_threshold`）
 - [x] `--dry-run` 不产生子进程副作用（`tests/unit/runner_test.py::RunStageTests::test_dry_run_does_not_execute`）
 - [ ] 一个 language + workload profile 组合改变实际执行阶段 —— **未实现**（profile 不自动加载，见 V1.2）

@@ -14,7 +14,7 @@ input:
 
 expect:
   must_contain:
-    - "./harness eval smoke"
+    - "./agent_harness eval smoke"
     - "--offline"
   must_not_contain:
     - "online"

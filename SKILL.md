@@ -41,7 +41,7 @@ Invoke `./harness` when the user asks to:
 
 ## Do not
 
-- Guess command names. Run `./harness list` first; stage names are stable
+- Guess command names. Run `./agent_harness list` first; stage names are stable
   but their argv are profile-supplied.
 - Use `shell=True` or string-concat commands when extending the harness —
   argv arrays only.
@@ -56,17 +56,17 @@ Invoke `./harness` when the user asks to:
 
 | Command | Meaning |
 |---|---|
-| `./harness --help` | Show stable commands |
-| `./harness doctor` | Check harness, config, datasets, declared toolchain |
-| `./harness validate` | Validate harness.toml + datasets + workflow refs |
-| `./harness list` | List stages, workflows, evals, security policy |
-| `./harness run <name>` | Run a stage or workflow |
-| `./harness run <name> --dry-run` | Print argv order without executing |
-| `./harness run <name> --json` | Stable machine-readable result |
-| `./harness eval smoke --offline` | Fast PR-level eval on fixtures |
-| `./harness eval full --offline` | Full regression eval on fixtures |
-| `./harness run security` | Built-in: redaction probe + policy + secret scan |
-| `./harness baseline compare <a> <b>` | Diff two reports |
+| `./agent_harness --help` | Show stable commands |
+| `./agent_harness doctor` | Check harness, config, datasets, declared toolchain |
+| `./agent_harness validate` | Validate harness.toml + datasets + workflow refs |
+| `./agent_harness list` | List stages, workflows, evals, security policy |
+| `./agent_harness run <name>` | Run a stage or workflow |
+| `./agent_harness run <name> --dry-run` | Print argv order without executing |
+| `./agent_harness run <name> --json` | Stable machine-readable result |
+| `./agent_harness eval smoke --offline` | Fast PR-level eval on fixtures |
+| `./agent_harness eval full --offline` | Full regression eval on fixtures |
+| `./agent_harness run security` | Built-in: redaction probe + policy + secret scan |
+| `./agent_harness baseline compare <a> <b>` | Diff two reports |
 
 Stable stage names: `bootstrap`, `format`, `lint`, `typecheck`,
 `test-unit`, `test-integration`, `eval-smoke`, `eval-full`, `security`.
@@ -84,22 +84,22 @@ Exit codes:
 
 ## Agent checklist
 
-1. If the project's toolchain looks uncertain, run `./harness doctor`
+1. If the project's toolchain looks uncertain, run `./agent_harness doctor`
    first; report missing optional tools but do not fail the run on them.
-2. Before proposing a change, run `./harness validate` to ensure config
+2. Before proposing a change, run `./agent_harness validate` to ensure config
    and datasets are well-formed.
-3. To discover what a project actually runs, use `./harness run <stage>
+3. To discover what a project actually runs, use `./agent_harness run <stage>
    --dry-run`; do not guess from `harness.toml` alone (workflows can
    nest).
 4. After changes that touch AI behavior (prompts, models, tools,
-   retrieval), run `./harness eval smoke --offline` at minimum; for
-   release-candidate changes, run `./harness run release-check`.
+   retrieval), run `./agent_harness eval smoke --offline` at minimum; for
+   release-candidate changes, run `./agent_harness run release-check`.
 5. If a stage reports `skipped`, surface the reason to the user; do not
    rephrase as success.
 6. If the user asks for online evals, confirm secret availability before
    running; never log or persist secrets.
 7. Compare release candidates against `evals/baselines/latest.json`
-   using `./harness baseline compare`.
+   using `./agent_harness baseline compare`.
 
 ## Profiles (do not auto-install)
 

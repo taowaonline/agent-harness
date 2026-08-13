@@ -1,8 +1,8 @@
 id: doctor-first
-title: Toolchain uncertain → recommend ./harness doctor first
+title: Toolchain uncertain → recommend ./agent_harness doctor first
 description: |
   SKILL.md Agent checklist item 1: when the project's toolchain looks
-  uncertain, the Agent should run `./harness doctor` before proposing
+  uncertain, the Agent should run `./agent_harness doctor` before proposing
   changes. Scenario: user just cloned a repo and is unsure the harness
   toolchain is ready. The Agent should point to doctor, not jump to
   running check or eval.
@@ -18,10 +18,10 @@ input:
 
 expect:
   must_contain:
-    - "./harness doctor"
+    - "./agent_harness doctor"
 
 judge:
   type: rule_based
   success:
     - output_contains:
-        all: ["./harness doctor"]
+        all: ["./agent_harness doctor"]

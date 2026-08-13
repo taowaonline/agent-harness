@@ -42,28 +42,28 @@
 python3 -m unittest discover -s tests -p '*_test.py'
 → exit 0，Ran 140 tests，OK
 
-./harness validate --json
+./agent_harness validate --json
 → exit 0，status=passed，带有 max_cost_usd 未实现 warning
 
-./harness validate --strict --json
+./agent_harness validate --strict --json
 → exit 1，但 JSON status 仍为 passed（见 P1-3）
 
-./harness run check --json
+./agent_harness run check --json
 → exit 0，status=passed
 
-./harness run check --dry-run --json
+./agent_harness run check --dry-run --json
 → exit 10，顶层 status=skipped，workflow status=skipped
 
-./harness run check --dry-run --allow-skipped --json
+./agent_harness run check --dry-run --allow-skipped --json
 → exit 0，顶层 status=skipped
 
-./harness eval smoke --offline --json
+./agent_harness eval smoke --offline --json
 → exit 0，8/8 passed，pass_rate=1.0
 
-./harness eval full --offline --json
+./agent_harness eval full --offline --json
 → exit 0，10/10 passed，pass_rate=1.0
 
-./harness run release-check --json
+./agent_harness run release-check --json
 → exit 0，check、integration、full eval、security 全部通过
 
 git diff --check
@@ -189,7 +189,7 @@ result.errors = ["runner: malformed JSON ..."]
 当前执行：
 
 ```text
-./harness validate --strict --json
+./agent_harness validate --strict --json
 ```
 
 结果是 exit 1，但 JSON 为 `status=passed`、`errors=[]`，warning 出现在 summary 中。

@@ -402,18 +402,18 @@ class InitVendorTests(unittest.TestCase):
         self.assertEqual(rc, 0, err_buf.getvalue())
         # Vendored src/agent_harness/ must exist.
         self.assertTrue((self.dir / "src" / "agent_harness" / "cli.py").exists())
-        # Run ./harness --version in a clean env.
+        # Run ./agent_harness --version in a clean env.
         env = {k: v for k, v in os.environ.items() if k != "HARNESS_HOME"}
         env["PATH"] = os.environ.get("PATH", "")
         proc = subprocess.run(
-            [str(self.dir / "harness"), "--version"],
+            [str(self.dir / "agent_harness"), "--version"],
             capture_output=True,
             text=True,
             env=env,
             timeout=10,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn("harness", proc.stdout)
+        self.assertIn("agent_harness", proc.stdout)
 
     def test_init_default_does_not_vendor(self) -> None:
         # Without --vendor, src/agent_harness/ must NOT be copied.
