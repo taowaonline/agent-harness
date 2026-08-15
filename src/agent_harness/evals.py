@@ -428,6 +428,146 @@ def _invoke_subprocess_runner(
     return outputs
 
 
+def _resolve_dataset_path(dataset: str, project_root: Path | None) -> Path:
+    p = Path(dataset)
+    if not p.is_absolute() and project_root is not None:
+        p = project_root / p
+    return p
+
+
+def _run_snapshot_record(
+    cfg: Config,
+    ec: EvalConfig,
+    name: str,
+    cases: list[EvalCase],
+    dataset_path: Path,
+    result: RunResult,
+    started_at: str,
+    started: float,
+) -> StageResult | None:
+    """Record mode: run the runner, write outputs back as fixtures.
+
+    Returns None on success (caller falls through to replay grading
+    against the fresh fixtures); returns a StageResult on failure.
+    """
+    assert ec.runner is not None
+    try:
+        runner_outputs = _invoke_subprocess_runner(ec, cases, result)
+    except _RunnerError as e:
+        result.add_error(f"runner: {e}")
+        return StageResult(
+            name=name,
+            kind="eval",
+            status=STATUS_FAILED,
+            reason=f"runner failed: {e}",
+            started_at=started_at,
+            duration_ms=int((time.monotonic() - started) * 1000),
+        )
+    # Rewrite the dataset with fresh fixtures, preserving field order and
+    # any non-fixture fields exactly as loaded. Atomic: temp + replace.
+    lines: list[str] = []
+    updated = 0
+    for case in cases:
+        rec: dict[str, Any] = {
+            "id": case.id,
+            "input": dict(case.input),
+            "expected": case.expected,
+        }
+        if case.tags:
+            rec["tags"] = case.tags
+        if case.metadata:
+            rec["metadata"] = case.metadata
+        out = runner_outputs.get(case.id)
+        if out is not None:
+            clean = {k: v for k, v in out.items() if not k.startswith("_")}
+            rec["input"]["output"] = clean
+            updated += 1
+        lines.append(json.dumps(rec, ensure_ascii=False))
+    tmp = dataset_path.with_name(f".{os.getpid()}-record.tmp")
+    tmp.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    os.replace(tmp, dataset_path)
+    result.summary["recorded_fixtures"] = updated
+    result.summary["dataset"] = str(dataset_path)
+    return None
+
+
+def _run_snapshot_diff(
+    cfg: Config,
+    ec: EvalConfig,
+    name: str,
+    cases: list[EvalCase],
+    result: RunResult,
+    started_at: str,
+    started: float,
+) -> StageResult:
+    """Diff mode: run the runner, compare against recorded fixtures.
+
+    Fails the stage on any mismatch; never writes the dataset. Missing
+    fixtures count as mismatches (nothing recorded to compare against).
+    """
+    assert ec.runner is not None
+    duration = int((time.monotonic() - started) * 1000)
+    try:
+        runner_outputs = _invoke_subprocess_runner(ec, cases, result)
+    except _RunnerError as e:
+        result.add_error(f"runner: {e}")
+        return StageResult(
+            name=name,
+            kind="eval",
+            status=STATUS_FAILED,
+            reason=f"runner failed: {e}",
+            started_at=started_at,
+            duration_ms=duration,
+        )
+    mismatches: list[str] = []
+    matched = 0
+    for case in cases:
+        fixture = case.input.get("output") or case.metadata.get("output")
+        actual_raw = runner_outputs.get(case.id)
+        if actual_raw is None:
+            mismatches.append(f"{case.id}: runner produced no output")
+            continue
+        actual = {k: v for k, v in actual_raw.items() if not k.startswith("_")}
+        if fixture == actual:
+            matched += 1
+        else:
+            mismatches.append(
+                f"{case.id}: fixture != runner output "
+                f"(fixture={json.dumps(fixture, ensure_ascii=False, sort_keys=True)[:200]} "
+                f"actual={json.dumps(actual, ensure_ascii=False, sort_keys=True)[:200]})"
+            )
+    summary = {
+        "mode": "diff",
+        "total": len(cases),
+        "matched": matched,
+        "mismatched": len(mismatches),
+    }
+    thresholds = _threshold_block(ec)
+    if mismatches:
+        for m in mismatches[:10]:
+            result.add_error(f"snapshot diff: {m}")
+        if len(mismatches) > 10:
+            result.add_error(f"snapshot diff: ...and {len(mismatches) - 10} more")
+        return StageResult(
+            name=name,
+            kind="eval",
+            status=STATUS_FAILED,
+            reason=f"{len(mismatches)} snapshot mismatch(es); run "
+            f"`--snapshot-mode=record` after reviewing, never auto-promote",
+            started_at=started_at,
+            duration_ms=int((time.monotonic() - started) * 1000),
+            metrics={"summary": summary, "thresholds": thresholds},
+        )
+    return StageResult(
+        name=name,
+        kind="eval",
+        status=STATUS_PASSED,
+        started_at=started_at,
+        duration_ms=int((time.monotonic() - started) * 1000),
+        metrics={"summary": summary, "thresholds": thresholds},
+    )
+
+
 def run_eval(
     cfg: Config,
     name: str,
@@ -435,14 +575,35 @@ def run_eval(
     *,
     offline: bool,
     provider: ModelProvider | None = None,
+    snapshot_mode: str = "replay",
 ) -> StageResult:
-    """Run an eval (smoke or full). Offline-only by default.
+    """Run an eval (smoke or full) in one of three snapshot modes.
+
+    Modes (adapted from dsh's DSH_SNAPSHOT record/replay/refresh):
+      - replay (default): grade against the fixture `output` baked into
+        the dataset. Keyless; this is the CI protocol gate.
+      - record: invoke the configured runner and write its outputs back
+        into the dataset as new fixtures, then grade. The dataset file
+        is rewritten atomically; every diff is reviewed by the human
+        who runs record.
+      - diff: invoke the runner and compare its outputs against the
+        recorded fixtures without writing. Any mismatch fails the stage
+        with a per-case report. This is the "behavior changed?" gate.
 
     `provider` is a callable that takes a case and returns a dict output.
-    When `offline` is True and no provider is given, the eval uses the
-    `output` fixture baked into the dataset (if present), else marks the
-    case as `error`.
+    When `offline` is True (replay) and no provider is given, the eval
+    uses the `output` fixture baked into the dataset (if present), else
+    marks the case as `error`.
     """
+    if snapshot_mode not in ("replay", "record", "diff"):
+        msg = f"unknown snapshot_mode '{snapshot_mode}' (replay|record|diff)"
+        result.add_error(msg)
+        return StageResult(name=name, kind="eval", status=STATUS_FAILED, reason=msg)
+    if snapshot_mode in ("record", "diff"):
+        if name not in cfg.evals or not cfg.evals[name].runner:
+            msg = f"snapshot-mode={snapshot_mode} requires [evals.{name}].runner"
+            result.add_error(msg)
+            return StageResult(name=name, kind="eval", status=STATUS_FAILED, reason=msg)
     if name not in cfg.evals:
         msg = f"eval '{name}' is not configured"
         result.add_error(msg)
@@ -450,6 +611,7 @@ def run_eval(
     ec = cfg.evals[name]
     started_at = _now_iso()
     started = time.monotonic()
+    dataset_path = _resolve_dataset_path(ec.dataset, cfg.project_root)
     try:
         cases = load_dataset(ec.dataset, project_root=cfg.project_root)
     except DatasetError as e:
@@ -464,6 +626,20 @@ def run_eval(
         )
     if ec.sample_limit is not None:
         cases = cases[: ec.sample_limit]
+
+    # ── diff mode: compare runner behavior against recorded fixtures ──
+    if snapshot_mode == "diff":
+        return _run_snapshot_diff(cfg, ec, name, cases, result, started_at, started)
+
+    # ── record mode: run the runner, write outputs back as fixtures ──
+    if snapshot_mode == "record":
+        record_stage = _run_snapshot_record(
+            cfg, ec, name, cases, dataset_path, result, started_at, started
+        )
+        if record_stage is not None:
+            return record_stage
+        # Fall through: dataset now carries fresh fixtures; replay-grade.
+
     # Honor `repetitions` (default 1). For non-deterministic workloads
     # (chat/agent traces) the user sets this >1 and we report the worst
     # pass_rate observed across reps. Each rep re-grades; fixture mode

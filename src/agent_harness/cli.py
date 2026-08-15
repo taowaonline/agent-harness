@@ -105,7 +105,19 @@ def _build_parser() -> argparse.ArgumentParser:
     sp.add_argument("kind", choices=["smoke", "full"])
     sp.add_argument("--config", default=DEFAULT_CONFIG_PATH)
     sp.add_argument(
-        "--offline", action="store_true", help="Only use fixture outputs; never call a model."
+        "--offline",
+        action="store_true",
+        help="Alias for --snapshot-mode=replay: grade against fixture outputs; never call a model.",
+    )
+    sp.add_argument(
+        "--snapshot-mode",
+        choices=["replay", "record", "diff"],
+        default=None,
+        help="replay (default): grade recorded fixtures, keyless CI gate. "
+        "record: run the configured runner and write its outputs back "
+        "into the dataset as fixtures — review every diff. diff: run the "
+        "runner and compare against recorded fixtures without writing; "
+        "any mismatch fails.",
     )
     sp.add_argument(
         "--allow-skipped",
@@ -399,7 +411,15 @@ def _cmd_run(args: argparse.Namespace) -> int:
 def _cmd_eval(args: argparse.Namespace) -> int:
     result = RunResult(command="eval")
     cfg = load_config(args.config)
-    stage = run_eval(cfg, args.kind, result, offline=bool(args.offline))
+    # --offline is the legacy alias for replay; explicit flag wins.
+    if args.snapshot_mode is not None:
+        mode = args.snapshot_mode
+    elif args.offline:
+        mode = "replay"
+    else:
+        mode = "replay"
+    stage = run_eval(cfg, args.kind, result, offline=(mode == "replay"), snapshot_mode=mode)
+    result.summary["snapshot_mode"] = mode
     result.stages.append(stage)
     if stage.status == STATUS_FAILED:
         result.status = STATUS_FAILED

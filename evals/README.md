@@ -65,6 +65,27 @@ To register a custom grader (e.g. semantic similarity, model judge), call
 `agent_harness.evals.register_grader(name, fn)` from your project. The base
 unit and integration tests never depend on a model API.
 
+## Snapshot modes (replay / record / diff)
+
+Eval runs in one of three snapshot modes (`--snapshot-mode`, adapted from
+dsh's record/replay/refresh state machine):
+
+| Mode | What it does | Writes dataset? | Typical use |
+|---|---|---|---|
+| `replay` (default; `--offline` is an alias) | Grade against the fixture `output` recorded in the dataset | no | Keyless CI protocol gate |
+| `record` | Run the configured `[evals.*].runner`, write its outputs back into the dataset as fixtures, then grade | **yes** (atomic rewrite) | After intentionally changing behavior; a human reviews the dataset diff |
+| `diff` | Run the runner and compare its outputs against the recorded fixtures per case | no | "Did behavior change?" gate in CI or pre-commit |
+
+Rules:
+
+- `record` and `diff` require a configured `runner`; they fail loudly without one.
+- `diff` fails the stage on **any** mismatch, including a missing fixture. The
+  failure message names each case and shows fixture-vs-actual, truncated.
+- The intended loop: `diff` goes red after a behavior change → you review why →
+  `record` refreshes the fixtures → the dataset diff goes through normal PR
+  review. Never auto-promote on a red `diff` — that is how regressions rewrite
+  their own measuring stick (see [ADR 0006](../docs/adr/0006-reports-vs-baselines.md)).
+
 ## Reports
 
 Reports are written to `evals/reports/` (gitignored — they are generated
