@@ -38,6 +38,13 @@ jobs:
           # `./agent_harness validate --strict` for zero-tolerance checking.
           ./agent_harness validate
 
+      - name: Schema in sync with parser
+        run: |
+          # config.py is the single source of truth; the checked-in
+          # schema must be exactly what schema_gen produces. Drift here
+          # is fixed by `./agent_harness gen-schema`, never hand-editing.
+          ./agent_harness verify-schema
+
       - name: Lint (compileall)
         run: |
           ./agent_harness run lint

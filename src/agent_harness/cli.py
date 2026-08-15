@@ -140,6 +140,29 @@ def _build_parser() -> argparse.ArgumentParser:
     sp.add_argument("topic")
 
     sp = sub.add_parser(
+        "gen-schema",
+        help="Regenerate harness.schema.json from config.py (the source of truth).",
+    )
+    sp.add_argument(
+        "--output",
+        default="harness.schema.json",
+        help="Path to write the schema to (default: ./harness.schema.json).",
+    )
+    sp.add_argument("--json", action="store_true", dest="json_output")
+
+    sp = sub.add_parser(
+        "verify-schema",
+        help="Verify the checked-in harness.schema.json matches config.py. "
+        "Exit 1 on drift; fix with `agent_harness gen-schema`.",
+    )
+    sp.add_argument(
+        "--schema",
+        default="harness.schema.json",
+        help="Path to the schema file to verify (default: ./harness.schema.json).",
+    )
+    sp.add_argument("--json", action="store_true", dest="json_output")
+
+    sp = sub.add_parser(
         "init",
         help="Bootstrap a harness setup in the current directory.",
     )
@@ -185,6 +208,10 @@ def _dispatch(args: argparse.Namespace) -> int:
         return _cmd_baseline(args)
     if cmd == "explain":
         return _cmd_explain(args)
+    if cmd == "gen-schema":
+        return _cmd_gen_schema(args)
+    if cmd == "verify-schema":
+        return _cmd_verify_schema(args)
     if cmd == "init":
         return _cmd_init(args)
     sys.stderr.write(f"unknown command: {cmd}\n")
@@ -422,6 +449,52 @@ def _cmd_explain(args: argparse.Namespace) -> int:
         return EXIT_USAGE
     sys.stdout.write(text + "\n")
     return EXIT_SUCCESS
+
+
+# ---------------------------------------------------------------------------
+# gen-schema / verify-schema
+# ---------------------------------------------------------------------------
+
+
+def _cmd_gen_schema(args: argparse.Namespace) -> int:
+    """Regenerate harness.schema.json from config.py."""
+    from .schema_gen import render_schema
+
+    result = RunResult(command="gen-schema")
+    out_path = Path(args.output)
+    text = render_schema()
+    out_path.write_text(text, encoding="utf-8")
+    result.summary["wrote"] = str(out_path)
+    result.summary["bytes"] = len(text)
+    _emit(result, args.json_output)
+    return EXIT_SUCCESS
+
+
+def _cmd_verify_schema(args: argparse.Namespace) -> int:
+    """Verify the checked-in schema matches config.py; exit 1 on drift."""
+    from .schema_gen import render_schema
+
+    result = RunResult(command="verify-schema")
+    schema_path = Path(args.schema)
+    if not schema_path.exists():
+        result.add_error(f"schema file not found: {schema_path}")
+        result.status = STATUS_FAILED
+        _emit(result, args.json_output)
+        return EXIT_VALIDATION
+    current = schema_path.read_text(encoding="utf-8")
+    expected = render_schema()
+    if current == expected:
+        result.summary["in_sync"] = True
+        result.summary["schema"] = str(schema_path)
+        _emit(result, args.json_output)
+        return EXIT_SUCCESS
+    result.add_error(
+        f"{schema_path} is out of sync with src/agent_harness/config.py. "
+        f"Run `agent_harness gen-schema` to regenerate."
+    )
+    result.status = STATUS_FAILED
+    _emit(result, args.json_output)
+    return EXIT_VALIDATION
 
 
 # ---------------------------------------------------------------------------

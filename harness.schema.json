@@ -3,36 +3,68 @@
   "$id": "https://agent-harness.local/harness.schema.json",
   "title": "Harness configuration",
   "type": "object",
-  "required": ["version", "project"],
+  "required": [
+    "version",
+    "project"
+  ],
   "additionalProperties": false,
   "properties": {
     "version": {
       "type": "integer",
       "description": "Major config version. Unknown majors are rejected.",
-      "enum": [1]
+      "enum": [
+        1
+      ]
     },
     "extends": {
       "type": "array",
-      "items": {"type": "string"},
+      "items": {
+        "type": "string"
+      },
       "description": "Profile refs to load and merge before this config. Format: 'languages.python', 'workloads.rag', 'risk.standard'. Order = base-first; project fields always win."
     },
     "project": {
       "type": "object",
-      "required": ["name", "language"],
+      "required": [
+        "name",
+        "language"
+      ],
       "additionalProperties": false,
       "properties": {
-        "name": {"type": "string", "minLength": 1},
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
         "language": {
           "type": "string",
-          "enum": ["python", "typescript", "go", "rust", "jvm", "dotnet", "other"]
+          "enum": [
+            "dotnet",
+            "go",
+            "jvm",
+            "other",
+            "python",
+            "rust",
+            "typescript"
+          ]
         },
         "workload": {
           "type": "string",
-          "enum": ["chat", "rag", "agent", "extraction", "code-agent", "other"]
+          "enum": [
+            "agent",
+            "chat",
+            "code-agent",
+            "extraction",
+            "other",
+            "rag"
+          ]
         },
         "risk": {
           "type": "string",
-          "enum": ["prototype", "standard", "high-risk"]
+          "enum": [
+            "high-risk",
+            "prototype",
+            "standard"
+          ]
         }
       }
     },
@@ -43,7 +75,9 @@
         "type": "array",
         "items": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "minItems": 1
         }
       }
@@ -53,37 +87,58 @@
       "description": "Map of workflow name to an ordered list of stage or workflow names.",
       "additionalProperties": {
         "type": "array",
-        "items": {"type": "string"}
+        "items": {
+          "type": "string"
+        }
       }
     },
     "evals": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "smoke": {"$ref": "#/$defs/evalConfig"},
-        "full": {"$ref": "#/$defs/evalConfig"}
+        "smoke": {
+          "$ref": "#/$defs/evalConfig"
+        },
+        "full": {
+          "$ref": "#/$defs/evalConfig"
+        }
       }
     },
     "security": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "redact_inputs": {"type": "boolean"},
-        "redact_outputs": {"type": "boolean"},
+        "redact_inputs": {
+          "type": "boolean"
+        },
+        "redact_outputs": {
+          "type": "boolean"
+        },
         "tool_allowlist": {
           "type": "array",
-          "items": {"type": "string"}
+          "items": {
+            "type": "string"
+          }
         },
         "require_approval_for": {
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["external_write", "delete", "payment", "deploy", "network_egress", "privileged"]
+            "enum": [
+              "delete",
+              "deploy",
+              "external_write",
+              "network_egress",
+              "payment",
+              "privileged"
+            ]
           }
         },
         "scan_exclude": {
           "type": "array",
-          "items": {"type": "string"},
+          "items": {
+            "type": "string"
+          },
           "description": "Glob patterns (fnmatch) for files/dirs the secret-scan should skip. Matched against path relative to project root with forward slashes. Use for vendored dictionaries, generated code, etc."
         }
       }
@@ -92,26 +147,52 @@
   "$defs": {
     "evalConfig": {
       "type": "object",
-      "required": ["dataset"],
+      "required": [
+        "dataset"
+      ],
       "additionalProperties": false,
       "properties": {
-        "dataset": {"type": "string"},
-        "sample_limit": {"type": "integer", "minimum": 1},
-        "timeout_seconds": {"type": "integer", "minimum": 1},
-        "max_cost_usd": {"type": "number", "minimum": 0},
-        "min_pass_rate": {"type": "number", "minimum": 0, "maximum": 1},
-        "repetitions": {"type": "integer", "minimum": 1},
-        "max_regression": {"type": "number", "minimum": 0, "maximum": 1},
-        "runner": {
-          "type": "array",
-          "items": {"type": "string"},
-          "minItems": 1,
-          "description": "Optional argv for a subprocess runner that consumes Case JSON on stdin and produces Result JSON on stdout."
+        "dataset": {
+          "type": "string"
         },
         "enforce_max_cost": {
           "type": "boolean",
           "default": false,
           "description": "If true, treat max_cost_usd as a hard gate: the runner must emit cost_usd per case; over-budget → stage FAILED. Default false (advisory only — no provider price table is bundled)."
+        },
+        "max_cost_usd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_regression": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "min_pass_rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "repetitions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sample_limit": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "runner": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Optional argv for a subprocess runner that consumes Case JSON on stdin and produces Result JSON on stdout."
         }
       }
     }
