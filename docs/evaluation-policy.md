@@ -49,6 +49,29 @@ When a model-based grader is used:
 - For high-stakes evals, sample at least 5% of judge decisions for human
   review.
 
+## Verify the world, not the self-report
+
+A `contains` / `regex` grader reads the SUT's own output and lets a
+cheating SUT pass — it verifies a self-report. When a case claims an
+external effect, prefer an assertion on the world: the file exists with
+the expected content, the exit code is N, the report JSON contains the
+field. The built-in grader registry today covers self-report checks
+(exact/contains/regex/json_*) and tool-call records; external-effect
+graders are the planned hard-gate tier and should be preferred the moment
+a case can express its expectation as one. Full rule and history:
+[testing policy](testing-policy.md#verify-the-world-not-the-self-report).
+
+## Keyless-by-default and self-skip
+
+Offline eval is the CI gate; online eval is opt-in. When real-model evals
+land, each provider suite detects its own key and **self-skips without
+it**, reporting `skipped` with the missing-key reason — a keyless run
+stays green and never silently degrades to a pass. Self-skip is an
+availability statement, not a cost signal; do not remove a self-skip to
+"save budget" and do not treat a skipped online case as coverage. Online
+runs require an explicit flag plus a configured key, never run on fork
+PRs, and their reports are redacted before persistence.
+
 ## Cost and budget
 
 - `[evals.smoke].max_cost_usd` is small (default $2). PR runs that
