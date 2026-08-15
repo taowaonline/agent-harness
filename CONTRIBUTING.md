@@ -1,5 +1,7 @@
 # Contributing
 
+English | [中文](CONTRIBUTING.zh.md)
+
 Thanks for helping improve the harness. Read `AGENTS.md` first — it is the
 binding contract for any contributor (human or model-assisted).
 
@@ -50,3 +52,11 @@ for every required check.
 - Prefer written, asynchronous updates over real-time pings.
 - Distinguish facts (test results, eval reports) from opinions.
 - Disagree constructively; propose alternatives, not vetoes.
+
+## Bilingual documents
+
+`README.md` / `README.zh.md` and `CONTRIBUTING.md` / `CONTRIBUTING.zh.md`
+are maintained as pairs: editing one side requires updating the other in
+the same PR, enforced by `verify-bilingual-pairs` tests in CI. Paragraph
+prose may differ (translate, don't transliterate), but facts, commands,
+and table rows must agree; heading structure must match.

@@ -1,5 +1,7 @@
 # AI Development Harness
 
+English | [中文](README.zh.md)
+
 A vendor-neutral, language-agnostic **control plane** for AI-assisted software
 development and AI application lifecycle management.
 
