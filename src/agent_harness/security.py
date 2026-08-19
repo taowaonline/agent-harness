@@ -103,10 +103,13 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
     advisory: list[str] = []
 
     # 1. Policy posture checks.
-    # AI workloads (chat/rag/agent/extraction/code-agent) expose Agent
-    # tools, so an empty allowlist is a real risk. Non-AI projects
-    # (workload = "other") have nothing to allowlist — empty is correct.
-    ai_workloads = {"chat", "rag", "agent", "extraction", "code-agent"}
+    # AI workloads expose Agent tools, so an empty allowlist is a real
+    # risk. Non-AI projects (workload = "other") have nothing to
+    # allowlist — empty is correct. Derived from config._ALLOWED_WORKLOADS
+    # (minus the explicit fallback) so it cannot drift from the parser.
+    from . import config as _cfg
+
+    ai_workloads = _cfg._ALLOWED_WORKLOADS - {"other"}
     if not cfg.security.tool_allowlist:
         if cfg.project.workload in ai_workloads:
             findings.append(
@@ -128,8 +131,9 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
     if "Bearer" in redacted or _STRIPE_TEST_KEY in redacted:
         findings.append("[redaction] probe failed — redaction patterns let a secret through")
 
-    # 3. Repo secret scan (best-effort, walks the working tree).
-    leaked = _scan_repo_for_secrets(scan_exclude=cfg.security.scan_exclude)
+    # 3. Repo secret scan (best-effort, walks the project tree — the
+    # config file's directory, NOT the process cwd, per Config.project_root).
+    leaked = _scan_repo_for_secrets(scan_exclude=cfg.security.scan_exclude, root=cfg.project_root)
     if leaked:
         for hit in leaked[:10]:
             findings.append(f"[secret-scan] {hit}")
@@ -159,29 +163,35 @@ def run_security_check(cfg: Config, result: RunResult) -> StageResult:
     return stage
 
 
-def _scan_repo_for_secrets(scan_exclude: list[str] | None = None) -> list[str]:
-    """Walk the working tree, return human-readable hits for likely secrets.
+def _scan_repo_for_secrets(
+    scan_exclude: list[str] | None = None, root: Path | None = None
+) -> list[str]:
+    """Walk the project tree, return human-readable hits for likely secrets.
 
-    `scan_exclude` is a list of glob patterns matched against the path
-    relative to project root (forward slashes). Matches skip the file
-    entirely. Use this for vendored dictionaries, generated code, large
-    text corpora that over-fire the secret patterns.
+    `root` is the project root (the config file's directory); defaults to
+    cwd for direct callers. `scan_exclude` is a list of glob patterns
+    matched against the path relative to root (forward slashes). Matches
+    skip the file entirely. Use this for vendored dictionaries, generated
+    code, large text corpora that over-fire the secret patterns.
     """
     hits: list[str] = []
-    root = Path.cwd()
+    if root is None:
+        root = Path.cwd()
     # Use the same secret patterns as redaction but report the file:line.
     from .redaction import _SECRET_PATTERNS
 
     excluded = _compile_exclude_patterns(scan_exclude or [])
 
     for path in _walk_text_files(root):
+        rel = str(path.relative_to(root))
+        # Honor user-supplied scan_exclude patterns BEFORE reading the
+        # file — excluded paths (vendored dictionaries, corpora) can be
+        # huge and must not be read just to be discarded.
+        if _matches_exclude(rel, excluded):
+            continue
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
         except OSError:
-            continue
-        rel = str(path.relative_to(root))
-        # Honor user-supplied scan_exclude patterns first.
-        if _matches_exclude(rel, excluded):
             continue
         # Skip fixture/test files: they legitimately contain secret-shaped
         # strings used to exercise the redactor and graders.

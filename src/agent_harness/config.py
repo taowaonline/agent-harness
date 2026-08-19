@@ -357,18 +357,53 @@ def _build_evals(raw: Any) -> dict[str, EvalConfig]:
         enforce_cost = body.get("enforce_max_cost", False)
         if not isinstance(enforce_cost, bool):
             raise ConfigError(f"[evals.{name}].enforce_max_cost must be a boolean")
+        # Numeric fields: enforce here (types + ranges) so a bad value is a
+        # validation error (exit 1), not a TypeError deep inside run_eval
+        # (exit 4). Ranges mirror the generated harness.schema.json, whose
+        # contract this parser owns.
+        sample_limit = _validated_number(body, "sample_limit", name, lo=1, integer=True)
+        timeout_seconds = _validated_number(body, "timeout_seconds", name, lo=1, integer=True)
+        repetitions = _validated_number(body, "repetitions", name, lo=1, integer=True, default=1)
+        max_cost_usd = _validated_number(body, "max_cost_usd", name, lo=0)
+        min_pass_rate = _validated_number(body, "min_pass_rate", name, lo=0, hi=1)
+        max_regression = _validated_number(body, "max_regression", name, lo=0, hi=1)
         out[name] = EvalConfig(
             dataset=dataset,
-            sample_limit=body.get("sample_limit"),
-            timeout_seconds=body.get("timeout_seconds"),
-            max_cost_usd=body.get("max_cost_usd"),
-            min_pass_rate=body.get("min_pass_rate"),
-            repetitions=int(body.get("repetitions", 1)),
-            max_regression=body.get("max_regression"),
+            sample_limit=sample_limit,
+            timeout_seconds=timeout_seconds,
+            max_cost_usd=max_cost_usd,
+            min_pass_rate=min_pass_rate,
+            repetitions=repetitions,
+            max_regression=max_regression,
             runner=runner,
             enforce_max_cost=enforce_cost,
         )
     return out
+
+
+def _validated_number(
+    body: dict[str, Any],
+    field: str,
+    eval_name: str,
+    *,
+    lo: float,
+    hi: float | None = None,
+    integer: bool = False,
+    default: int | float | None = None,
+) -> Any:
+    """Validate one numeric eval field against the schema contract."""
+    v = body.get(field, default)
+    if v is None:
+        return None
+    kind = "integer" if integer else "number"
+    range_desc = f">= {lo}" if hi is None else f"in [{lo}, {hi}]"
+    if isinstance(v, bool) or not isinstance(v, int | float):
+        raise ConfigError(f"[evals.{eval_name}].{field} must be an {kind} {range_desc}")
+    if integer and not isinstance(v, int):
+        raise ConfigError(f"[evals.{eval_name}].{field} must be an {kind} {range_desc}")
+    if v < lo or (hi is not None and v > hi):
+        raise ConfigError(f"[evals.{eval_name}].{field} must be an {kind} {range_desc}")
+    return v
 
 
 def _build_security(raw: Any) -> SecurityConfig:

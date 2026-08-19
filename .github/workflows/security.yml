@@ -78,8 +78,11 @@ jobs:
           sudo chmod +x /usr/local/bin/gitleaks
 
       - name: gitleaks (risk-aware)
+        env:
+          # Pass via env, never inline into run: — the value derives from
+          # repo content (harness.toml) and must not be shell-interpolated.
+          RISK: ${{ needs.detect-risk.outputs.risk }}
         run: |
-          RISK="${{ needs.detect-risk.outputs.risk }}"
           if command -v gitleaks >/dev/null 2>&1; then
             if gitleaks detect --source . --no-banner --redact; then
               echo "gitleaks: clean"
@@ -121,8 +124,9 @@ jobs:
         run: pip install pip-audit
 
       - name: pip-audit (risk-aware)
+        env:
+          RISK: ${{ needs.detect-risk.outputs.risk }}
         run: |
-          RISK="${{ needs.detect-risk.outputs.risk }}"
           if command -v pip-audit >/dev/null 2>&1; then
             if pip-audit --strict; then
               echo "pip-audit: clean"

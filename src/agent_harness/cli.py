@@ -857,7 +857,7 @@ def _find_example_for(*, language: str, workload: str, home: Path) -> Path | Non
     if (direct / "harness.toml").exists():
         return direct / "harness.toml"
     # Fall back to any example for that language.
-    for p in sorted(examples.glob(f"{language}-./agent_harness.toml")):
+    for p in sorted(examples.glob(f"{language}-*/harness.toml")):
         return p
     return None
 

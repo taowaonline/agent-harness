@@ -133,6 +133,7 @@ def _build_case(rec: Any, path: str | Path, lineno: int) -> EvalCase:
     exp = rec["expected"]
     if not isinstance(exp, dict):
         raise DatasetError(f"{path}:{lineno}: 'expected' must be an object")
+    _validate_expected_shape(exp, path, lineno)
     tags = rec.get("tags", [])
     if not isinstance(tags, list) or not all(isinstance(t, str) for t in tags):
         raise DatasetError(f"{path}:{lineno}: 'tags' must be a list of strings")
@@ -147,6 +148,46 @@ def _build_case(rec: Any, path: str | Path, lineno: int) -> EvalCase:
         metadata=dict(meta),
         source_line=lineno,
     )
+
+
+def _validate_expected_shape(exp: dict[str, Any], path: str | Path, lineno: int) -> None:
+    """Reject expected-field shapes that would crash or silently misgrade.
+
+    Caught here (at dataset load, with file:line context) rather than deep
+    inside a grader as an IndexError/AttributeError internal error:
+      - `contains` must be a non-empty list of strings — an empty list would
+        IndexError on `[0]`, and a bare string would silently grade on its
+        first character.
+      - `not_contains` must be a list of strings.
+      - `regex` must be a string and must compile.
+      - `graders` must be a list of objects.
+    """
+    if "contains" in exp:
+        v = exp["contains"]
+        if not isinstance(v, list) or not v or not all(isinstance(x, str) for x in v):
+            raise DatasetError(
+                f"{path}:{lineno}: 'expected.contains' must be a non-empty list of strings"
+            )
+    if "not_contains" in exp:
+        v = exp["not_contains"]
+        if not isinstance(v, list) or not all(isinstance(x, str) for x in v):
+            raise DatasetError(
+                f"{path}:{lineno}: 'expected.not_contains' must be a list of strings"
+            )
+    if "regex" in exp:
+        v = exp["regex"]
+        if not isinstance(v, str):
+            raise DatasetError(f"{path}:{lineno}: 'expected.regex' must be a string")
+        try:
+            re.compile(v)
+        except re.error as e:
+            raise DatasetError(f"{path}:{lineno}: 'expected.regex' does not compile: {e}") from e
+    if "graders" in exp:
+        v = exp["graders"]
+        if not isinstance(v, list) or not all(isinstance(g, dict) for g in v):
+            raise DatasetError(
+                f"{path}:{lineno}: 'expected.graders' must be a list of grader objects"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -803,7 +844,10 @@ def _grade_case(
         if "exact" in case.expected:
             graders.append({"kind": "exact"})
         if "contains" in case.expected:
-            graders.append({"kind": "contains", "needle": case.expected["contains"][0]})
+            # All needles must be present, mirroring not_contains — the
+            # dataset lists every required substring, not just the first.
+            for needle in case.expected["contains"]:
+                graders.append({"kind": "contains", "needle": needle})
         if "not_contains" in case.expected:
             for needle in case.expected["not_contains"]:
                 graders.append({"kind": "not_contains", "needle": needle})
