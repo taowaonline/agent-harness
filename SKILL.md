@@ -1,5 +1,5 @@
 ---
-name: agent-harness
+name: agent_harness
 description: >-
   Vendor-neutral control plane for AI-assisted development and AI application
   lifecycle. Use when the user wants to set up or audit local CI/CD for an AI
@@ -11,7 +11,7 @@ description: >-
   vendor, or AI framework.
 ---
 
-# agent-harness
+# agent_harness
 
 A coding Agent uses this skill when the project has adopted the harness
 (detect `./harness` and `harness.toml` at the repo root). The Agent invokes
