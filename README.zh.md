@@ -40,6 +40,9 @@
 | `eval <...> --snapshot-mode diff` | 跑 runner 并与录制的 fixture 逐例对比，不写数据集 |
 | `eval <...> --snapshot-mode record` | 跑 runner 并把输出写回数据集作为 fixture |
 | `gen-schema` / `verify-schema` | 从 config.py 生成 / 校验 harness.schema.json |
+| `baseline compare <a> <b>` | 对比两份评测报告 |
+| `explain <topic>` | 解释阶段或策略主题 |
+| `init` | 在当前目录初始化 harness 配置 |
 
 阶段名映射到各语言的具体工具（Ruff、ESLint、`tsc`、`go vet`、Clippy、
 `dotnet format`……），但**命令名和结果语义保持稳定**。

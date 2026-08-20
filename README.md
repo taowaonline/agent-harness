@@ -42,6 +42,12 @@ This harness unifies them behind a single set of commands so a project that
 | `run <stage-or-workflow> --dry-run` | Print what would run without executing |
 | `run <stage-or-workflow> --json` | Emit stable machine-readable result |
 | `eval <smoke\|full> --offline` | Run an offline deterministic eval |
+| `eval <...> --snapshot-mode diff` | Run the runner and diff each case against recorded fixtures |
+| `eval <...> --snapshot-mode record` | Run the runner and write outputs back to the dataset as fixtures |
+| `baseline compare <a> <b>` | Diff two eval reports |
+| `explain <topic>` | Explain a stage or policy topic |
+| `gen-schema` / `verify-schema` | Generate / verify harness.schema.json from config.py |
+| `init` | Bootstrap a harness setup in the current directory |
 
 Stage names map to language-specific tools (Ruff, ESLint, `tsc`, `go vet`,
 Clippy, `dotnet format`, …) but the **names and result semantics are stable**.
@@ -95,13 +101,13 @@ applies live with no re-run needed. Python CLI requires Python 3.11+
 
 - `agent-harness` — executable entry point (no need to remember a Python module path)
 - `harness.toml` — this repository's own config
-- `harness.schema.json` — machine-readable config contract
+- `harness.schema.json` — machine-readable config contract (generated from config.py via `gen-schema`)
 - `src/agent_harness/` — control plane implementation
 - `tests/` — unit, integration, and fixture-driven tests
 - `evals/` — datasets, graders, baselines, and generated reports
 - `profiles/` — copy-and-override profiles for languages, workloads, risk levels
 - `prompts/` — prompt manifest example
-- `docs/` — architecture, security, observability, release, evaluation policy
+- `docs/` — architecture, security, observability, release, evaluation, testing policy, postmortems, decision notes
 - `examples/` — cross-language reference projects
 - `.github/` — CI, eval, and security workflows plus templates
 
@@ -119,5 +125,5 @@ applies live with no re-run needed. Python CLI requires Python 3.11+
 
 ## Status
 
-This is the initial reference implementation scaffold. See
-`docs/adr/` for design decisions.
+Reference implementation scaffold, under active iteration. See
+`docs/adr/` and `docs/notes/` for design decisions.
