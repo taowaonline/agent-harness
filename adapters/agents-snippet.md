@@ -33,4 +33,4 @@ otherwise use the globally installed `agent-harness-setup` package location or
 - Baseline updates under `evals/baselines/` are explicit, reviewable operations.
 
 Skill version details: see SKILL.md and docs/ in the package
-(@taowaonline/agent-harness on npm; github.com/taowaonline/agent_harness).
+(@taowaonline/agent-harness on npm; github.com/taowaonline/agent-harness).
