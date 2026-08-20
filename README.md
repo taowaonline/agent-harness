@@ -64,9 +64,36 @@ The control plane is implemented in Python 3.11+ standard library only — no
 runtime third-party dependencies. Tests run with the built-in `unittest`
 module.
 
+## Install as an agent skill (npm)
+
+Distributed as
+[`@taowaonline/agent-harness`](https://www.npmjs.com/package/@taowaonline/agent-harness)
+— one package, every coding agent:
+
+```bash
+npm install -g @taowaonline/agent-harness
+agent-harness-setup            # wire the skill into every detected CLI
+agent-harness-setup --list     # show all targets
+```
+
+| Target | Flag | Installs |
+|---|---|---|
+| Claude Code | `--claude` | `~/.claude/skills/agent_harness` |
+| Z.ai ZCode | `--zcode` | `~/.zcode/skills/agent_harness` |
+| Kimi Code CLI | `--kimi` | `~/.kimi-code/skills/agent_harness` |
+| Cross-tool shared | `--agents-shared` | `~/.agents/skills/agent_harness` |
+| Deep Code | `--deepcode` | `~/.deepcode/skills/agent_harness` (best-effort) |
+| Codex | `--codex` | managed block in `~/.codex/AGENTS.md` |
+| Cursor | `--cursor --project <dir>` | `.cursor/rules/agent-harness.mdc` |
+
+SKILL.md targets are symlinks into the installed package, so `npm update -g`
+applies live with no re-run needed. Python CLI requires Python 3.11+
+(standard library only). Remove everything with
+`agent-harness-setup --uninstall`.
+
 ## What's inside
 
-- `harness` — executable entry point (no need to remember a Python module path)
+- `agent_harness` — executable entry point (no need to remember a Python module path)
 - `harness.toml` — this repository's own config
 - `harness.schema.json` — machine-readable config contract
 - `src/agent_harness/` — control plane implementation

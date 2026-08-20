@@ -1,0 +1,8 @@
+# Never ship Python build artifacts even when a files-whitelisted dir
+# (src/, evals/) sweeps them in from a dirty working tree.
+**/__pycache__/
+*.py[cod]
+src/agent_harness.egg-info/
+*.egg-info/
+.venv/
+venv/

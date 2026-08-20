@@ -1,0 +1,32 @@
+---
+description: Use the agent_harness CLI (doctor/validate/list/run/eval) instead of inventing command chains when the project has a harness.toml or the user asks to set up local CI/evals for an AI project.
+alwaysApply: false
+---
+
+# agent_harness
+
+The `agent_harness` CLI (npm: @taowaonline/agent-harness) is a vendor-neutral
+control plane for AI-assisted development: stable stage names (format, lint,
+typecheck, test-unit, test-integration, eval-smoke, eval-full, security) that
+map to language-specific tools via harness.toml profiles.
+
+## When this rule applies
+
+- The project has a `harness.toml`, or the user asks to set up / audit local
+  CI, offline AI evals, or security posture for an AI project.
+
+## What to do
+
+- Discover commands, never guess: `agent_harness list`, then
+  `agent_harness run <stage> --dry-run` to preview argv.
+- Before proposing changes: `agent_harness validate`.
+- After changes touching AI behavior (prompts, models, tools, retrieval):
+  `agent_harness eval smoke --offline` minimum; release candidates run
+  `agent_harness run release-check`.
+- `skipped` is not `passed` — report the skip reason.
+- Offline evals are the default; online only on explicit request.
+
+## Reference
+
+Full skill: SKILL.md in the installed package. Docs: architecture,
+security-model, evaluation-policy, release-policy under docs/.

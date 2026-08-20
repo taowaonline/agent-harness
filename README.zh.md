@@ -60,6 +60,32 @@
 控制面只用 Python 3.11+ 标准库实现——零运行时第三方依赖。测试用内置
 `unittest` 运行。
 
+## 以 Agent Skill 形式安装（npm）
+
+以
+[`@taowaonline/agent-harness`](https://www.npmjs.com/package/@taowaonline/agent-harness)
+分发——一个包，覆盖所有编码 Agent CLI：
+
+```bash
+npm install -g @taowaonline/agent-harness
+agent-harness-setup            # 把 skill 接入各个 CLI
+agent-harness-setup --list     # 查看全部目标
+```
+
+| 目标 | 标志 | 安装位置 |
+|---|---|---|
+| Claude Code | `--claude` | `~/.claude/skills/agent_harness` |
+| Z.ai ZCode | `--zcode` | `~/.zcode/skills/agent_harness` |
+| Kimi Code CLI | `--kimi` | `~/.kimi-code/skills/agent_harness` |
+| 跨工具共享目录 | `--agents-shared` | `~/.agents/skills/agent_harness` |
+| Deep Code | `--deepcode` | `~/.deepcode/skills/agent_harness`（尽力而为） |
+| Codex | `--codex` | `~/.codex/AGENTS.md` 托管块 |
+| Cursor | `--cursor --project <目录>` | `.cursor/rules/agent-harness.mdc` |
+
+SKILL.md 目标是指向安装包的符号链接，`npm update -g` 后即时生效、无需重跑。
+Python CLI 需要 Python 3.11+（仅标准库）。卸载用
+`agent-harness-setup --uninstall`。
+
 ## 目录
 
 - `agent_harness` —— 可执行入口

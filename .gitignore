@@ -16,6 +16,10 @@ dist/
 htmlcov/
 .tox/
 
+# npm
+*.tgz
+node_modules/
+
 # Virtual environments
 .venv/
 venv/

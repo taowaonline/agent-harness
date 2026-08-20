@@ -1,0 +1,52 @@
+{
+  "name": "@taowaonline/agent-harness",
+  "version": "0.1.0",
+  "description": "Vendor-neutral control plane for AI-assisted development and AI application lifecycle — one harness, every coding agent (Claude Code, Codex, ZCode, Kimi, Deep Code, Cursor).",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taowaonline/agent_harness.git"
+  },
+  "bin": {
+    "agent-harness-setup": "bin/setup.js"
+  },
+  "files": [
+    "bin/setup.js",
+    "SKILL.md",
+    "agent_harness",
+    "harness.toml",
+    "harness.schema.json",
+    "pyproject.toml",
+    "src/",
+    "profiles/",
+    "examples/",
+    "prompts/",
+    "docs/",
+    "adapters/",
+    "evals/README.md",
+    "evals/eval.yaml",
+    "evals/datasets/",
+    "evals/cases/",
+    "evals/graders/",
+    "evals/baselines/latest.json",
+    "evals/baselines/README.md"
+  ],
+  "keywords": [
+    "claude-code",
+    "codex",
+    "cursor",
+    "zcode",
+    "kimi",
+    "deepseek",
+    "skill",
+    "agents-md",
+    "ci",
+    "eval"
+  ],
+  "engines": {
+    "node": ">=14"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
