@@ -1,5 +1,5 @@
 ---
-name: agent_harness
+name: agent-harness
 description: >-
   Vendor-neutral control plane for AI-assisted development and AI application
   lifecycle. Use when the user wants to set up or audit local CI/CD for an AI
@@ -11,7 +11,7 @@ description: >-
   vendor, or AI framework.
 ---
 
-# agent_harness
+# agent-harness
 
 A coding Agent uses this skill when the project has adopted the harness
 (detect `./harness` and `harness.toml` at the repo root). The Agent invokes
@@ -19,7 +19,7 @@ the CLI directly; it does not reinvent command chains.
 
 Skill root (this folder) layout:
 
-- `harness` — executable entry point
+- `agent-harness` — executable entry point
 - `harness.toml` — this repo's own config (also the reference example)
 - `src/agent_harness/` — control plane (Python 3.11+ stdlib only)
 - `profiles/{languages,workloads,risk}/` — copy-and-override snippets
@@ -41,7 +41,7 @@ Invoke `./harness` when the user asks to:
 
 ## Do not
 
-- Guess command names. Run `./agent_harness list` first; stage names are stable
+- Guess command names. Run `./agent-harness list` first; stage names are stable
   but their argv are profile-supplied.
 - Use `shell=True` or string-concat commands when extending the harness —
   argv arrays only.
@@ -56,17 +56,17 @@ Invoke `./harness` when the user asks to:
 
 | Command | Meaning |
 |---|---|
-| `./agent_harness --help` | Show stable commands |
-| `./agent_harness doctor` | Check harness, config, datasets, declared toolchain |
-| `./agent_harness validate` | Validate harness.toml + datasets + workflow refs |
-| `./agent_harness list` | List stages, workflows, evals, security policy |
-| `./agent_harness run <name>` | Run a stage or workflow |
-| `./agent_harness run <name> --dry-run` | Print argv order without executing |
-| `./agent_harness run <name> --json` | Stable machine-readable result |
-| `./agent_harness eval smoke --offline` | Fast PR-level eval on fixtures |
-| `./agent_harness eval full --offline` | Full regression eval on fixtures |
-| `./agent_harness run security` | Built-in: redaction probe + policy + secret scan |
-| `./agent_harness baseline compare <a> <b>` | Diff two reports |
+| `./agent-harness --help` | Show stable commands |
+| `./agent-harness doctor` | Check harness, config, datasets, declared toolchain |
+| `./agent-harness validate` | Validate harness.toml + datasets + workflow refs |
+| `./agent-harness list` | List stages, workflows, evals, security policy |
+| `./agent-harness run <name>` | Run a stage or workflow |
+| `./agent-harness run <name> --dry-run` | Print argv order without executing |
+| `./agent-harness run <name> --json` | Stable machine-readable result |
+| `./agent-harness eval smoke --offline` | Fast PR-level eval on fixtures |
+| `./agent-harness eval full --offline` | Full regression eval on fixtures |
+| `./agent-harness run security` | Built-in: redaction probe + policy + secret scan |
+| `./agent-harness baseline compare <a> <b>` | Diff two reports |
 
 Stable stage names: `bootstrap`, `format`, `lint`, `typecheck`,
 `test-unit`, `test-integration`, `eval-smoke`, `eval-full`, `security`.
@@ -84,22 +84,22 @@ Exit codes:
 
 ## Agent checklist
 
-1. If the project's toolchain looks uncertain, run `./agent_harness doctor`
+1. If the project's toolchain looks uncertain, run `./agent-harness doctor`
    first; report missing optional tools but do not fail the run on them.
-2. Before proposing a change, run `./agent_harness validate` to ensure config
+2. Before proposing a change, run `./agent-harness validate` to ensure config
    and datasets are well-formed.
-3. To discover what a project actually runs, use `./agent_harness run <stage>
+3. To discover what a project actually runs, use `./agent-harness run <stage>
    --dry-run`; do not guess from `harness.toml` alone (workflows can
    nest).
 4. After changes that touch AI behavior (prompts, models, tools,
-   retrieval), run `./agent_harness eval smoke --offline` at minimum; for
-   release-candidate changes, run `./agent_harness run release-check`.
+   retrieval), run `./agent-harness eval smoke --offline` at minimum; for
+   release-candidate changes, run `./agent-harness run release-check`.
 5. If a stage reports `skipped`, surface the reason to the user; do not
    rephrase as success.
 6. If the user asks for online evals, confirm secret availability before
    running; never log or persist secrets.
 7. Compare release candidates against `evals/baselines/latest.json`
-   using `./agent_harness baseline compare`.
+   using `./agent-harness baseline compare`.
 
 ## Profiles (do not auto-install)
 

@@ -10,10 +10,10 @@ control plane rather than a plugin monorepo.
 
 | Tier | Command | Key required | Purpose |
 |---|---|---|---|
-| Unit | `agent_harness run test-unit` | no | Parser, runner, graders, redaction, policy logic |
-| Integration | `agent_harness run test-unit` (same suite) | no | CLI end-to-end through `main()` in tempdirs |
-| Offline eval | `agent_harness eval smoke/full --offline` | no | Dataset/grader/threshold protocol regression |
-| Runner eval | `agent_harness eval <kind> --snapshot-mode=diff` | no (if runner is local) | Real subprocess SUT behavior vs recorded fixtures |
+| Unit | `agent-harness run test-unit` | no | Parser, runner, graders, redaction, policy logic |
+| Integration | `agent-harness run test-unit` (same suite) | no | CLI end-to-end through `main()` in tempdirs |
+| Offline eval | `agent-harness eval smoke/full --offline` | no | Dataset/grader/threshold protocol regression |
+| Runner eval | `agent-harness eval <kind> --snapshot-mode=diff` | no (if runner is local) | Real subprocess SUT behavior vs recorded fixtures |
 | Online eval | future provider integration | yes | Real model behavior; self-skips without key |
 
 Tests live next to the area they exercise (`tests/unit/*_test.py`) and run
@@ -60,9 +60,9 @@ failure was added, and the reproduction flipped to blocked.
 
 ### Test the real entry path
 
-The CLI entry (`agent_harness`) is exercised black-box in
+The CLI entry (`agent-harness`) is exercised black-box in
 `tests/unit/project_root_test.py` and `skipped_semantics_test.py` by
-copying `agent_harness + src/` to a tempdir and running `--version` with
+copying `agent-harness + src/` to a tempdir and running `--version` with
 `HARNESS_HOME` unset. That catches launcher regressions that importing
 `agent_harness.cli` directly masks. The `--vendor` init path has the same
 style of test (`sixth_review_regression_test.py`).
@@ -94,6 +94,6 @@ the same change.
 
 Report persistence is PID-scoped-temp + `os.replace` (see
 `schema_and_reports_test.py::test_concurrent_persist_does_not_corrupt`).
-Still, avoid running multiple `agent_harness eval` processes against the
+Still, avoid running multiple `agent-harness eval` processes against the
 same project directory simultaneously; the harness does not lock the
 dataset file.

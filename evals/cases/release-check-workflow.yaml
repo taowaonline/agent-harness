@@ -3,7 +3,7 @@ title: release-check is the pre-release gate workflow
 description: |
   SKILL.md "Stable command surface" + workflows in harness.toml:
   `release-check` composes `check + test-integration + eval-full +
-  security`. The Agent must invoke `./agent_harness run release-check` (or
+  security`. The Agent must invoke `./agent-harness run release-check` (or
   its dry-run) when the user asks for the pre-release gate, not invent
   a sequence.
 
@@ -17,7 +17,7 @@ input:
 
 expect:
   must_contain:
-    - "./agent_harness run release-check"
+    - "./agent-harness run release-check"
   must_not_contain:
     # Must not propose chaining every stage manually with &&.
     - "run check && run test-integration && run eval-full && run security"

@@ -1,4 +1,4 @@
-# AI Development Harness（agent_harness）
+# AI Development Harness（agent-harness）
 
 [English](README.md) | 中文
 
@@ -49,12 +49,12 @@
 ## 快速开始
 
 ```bash
-./agent_harness doctor
-./agent_harness validate
-./agent_harness list
-./agent_harness run check --dry-run
-./agent_harness run check
-./agent_harness eval smoke --offline
+./agent-harness doctor
+./agent-harness validate
+./agent-harness list
+./agent-harness run check --dry-run
+./agent-harness run check
+./agent-harness eval smoke --offline
 ```
 
 控制面只用 Python 3.11+ 标准库实现——零运行时第三方依赖。测试用内置
@@ -74,11 +74,11 @@ agent-harness-setup --list     # 查看全部目标
 
 | 目标 | 标志 | 安装位置 |
 |---|---|---|
-| Claude Code | `--claude` | `~/.claude/skills/agent_harness` |
-| Z.ai ZCode | `--zcode` | `~/.zcode/skills/agent_harness` |
-| Kimi Code CLI | `--kimi` | `~/.kimi-code/skills/agent_harness` |
-| 跨工具共享目录 | `--agents-shared` | `~/.agents/skills/agent_harness` |
-| Deep Code | `--deepcode` | `~/.deepcode/skills/agent_harness`（尽力而为） |
+| Claude Code | `--claude` | `~/.claude/skills/agent-harness` |
+| Z.ai ZCode | `--zcode` | `~/.zcode/skills/agent-harness` |
+| Kimi Code CLI | `--kimi` | `~/.kimi-code/skills/agent-harness` |
+| 跨工具共享目录 | `--agents-shared` | `~/.agents/skills/agent-harness` |
+| Deep Code | `--deepcode` | `~/.deepcode/skills/agent-harness`（尽力而为） |
 | Codex | `--codex` | `~/.codex/AGENTS.md` 托管块 |
 | Cursor | `--cursor --project <目录>` | `.cursor/rules/agent-harness.mdc` |
 
@@ -88,7 +88,7 @@ Python CLI 需要 Python 3.11+（仅标准库）。卸载用
 
 ## 目录
 
-- `agent_harness` —— 可执行入口
+- `agent-harness` —— 可执行入口
 - `harness.toml` —— 本仓库自身配置
 - `harness.schema.json` —— 配置契约（由 `gen-schema` 从 config.py 生成）
 - `src/agent_harness/` —— 控制面实现

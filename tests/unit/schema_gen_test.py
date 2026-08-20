@@ -98,7 +98,7 @@ class CheckedInSchemaSyncTests(unittest.TestCase):
             checked_in,
             render_schema(),
             "harness.schema.json drifted from config.py — "
-            "run `agent_harness gen-schema` to regenerate",
+            "run `agent-harness gen-schema` to regenerate",
         )
 
 

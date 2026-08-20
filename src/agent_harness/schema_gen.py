@@ -9,7 +9,7 @@ parser validates against, so a new allowed key cannot exist in one and
 not the other.
 
 Regenerate rather than reject (dsh lefthook philosophy): if drift ever
-appears, the fix is `agent_harness gen-schema`, not hand-editing JSON.
+appears, the fix is `agent-harness gen-schema`, not hand-editing JSON.
 """
 
 from __future__ import annotations

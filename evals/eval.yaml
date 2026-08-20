@@ -1,12 +1,12 @@
 schema_version: v1alpha1
 
-# Goal: verify the agent_harness Skill's "decision correctness".
+# Goal: verify the agent-harness Skill's "decision correctness".
 # We do NOT actually run subprocess builds here; we test whether the Agent
-# invokes the harness CLI (./agent_harness) and uses the stable command surface
+# invokes the harness CLI (./agent-harness) and uses the stable command surface
 # correctly:
 #   1) recommends doctor when toolchain is uncertain
 #   2) recommends validate before changes
-#   3) uses ./agent_harness list to discover commands (not guess)
+#   3) uses ./agent-harness list to discover commands (not guess)
 #   4) uses --dry-run to preview
 #   5) reports skipped as skipped, never as passed
 #   6) defaults to offline eval

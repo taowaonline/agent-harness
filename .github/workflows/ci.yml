@@ -35,35 +35,35 @@ jobs:
           # Plain validate (not --strict): the harness repo intentionally
           # ships fields like max_cost_usd in [evals.*] as documentation
           # of the schema, even though they're not yet enforced. Use
-          # `./agent_harness validate --strict` for zero-tolerance checking.
-          ./agent_harness validate
+          # `./agent-harness validate --strict` for zero-tolerance checking.
+          ./agent-harness validate
 
       - name: Schema in sync with parser
         run: |
           # config.py is the single source of truth; the checked-in
           # schema must be exactly what schema_gen produces. Drift here
-          # is fixed by `./agent_harness gen-schema`, never hand-editing.
-          ./agent_harness verify-schema
+          # is fixed by `./agent-harness gen-schema`, never hand-editing.
+          ./agent-harness verify-schema
 
       - name: Lint (compileall)
         run: |
-          ./agent_harness run lint
+          ./agent-harness run lint
 
       - name: Unit tests
         run: |
-          ./agent_harness run test-unit
+          ./agent-harness run test-unit
 
       - name: Integration tests
         run: |
-          ./agent_harness run test-integration
+          ./agent-harness run test-integration
 
       - name: Offline smoke eval
         run: |
-          ./agent_harness eval smoke --offline
+          ./agent-harness eval smoke --offline
 
       - name: Security posture check
         run: |
-          ./agent_harness run security
+          ./agent-harness run security
 
       - name: Upload eval reports
         if: always()

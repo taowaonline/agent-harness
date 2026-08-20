@@ -1,13 +1,13 @@
 """Harness CLI entry point.
 
 Stable commands:
-    ./agent_harness doctor
-    ./agent_harness validate
-    ./agent_harness list
-    ./agent_harness run <stage-or-workflow> [--dry-run] [--json]
-    ./agent_harness eval <smoke|full> [--offline] [--json]
-    ./agent_harness baseline compare <report-a> <report-b>
-    ./agent_harness explain <topic>
+    ./agent-harness doctor
+    ./agent-harness validate
+    ./agent-harness list
+    ./agent-harness run <stage-or-workflow> [--dry-run] [--json]
+    ./agent-harness eval <smoke|full> [--offline] [--json]
+    ./agent-harness baseline compare <report-a> <report-b>
+    ./agent-harness explain <topic>
 """
 
 from __future__ import annotations
@@ -66,13 +66,13 @@ def main(argv: list[str] | None = None) -> int:
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="agent_harness",
+        prog="agent-harness",
         description=(
             "Vendor-neutral control plane for AI-assisted development and "
             "AI application lifecycle management."
         ),
     )
-    p.add_argument("--version", action="version", version=f"agent_harness {__version__}")
+    p.add_argument("--version", action="version", version=f"agent-harness {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     sp = sub.add_parser("doctor", help="Check harness, config, and toolchain.")
@@ -165,7 +165,7 @@ def _build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser(
         "verify-schema",
         help="Verify the checked-in harness.schema.json matches config.py. "
-        "Exit 1 on drift; fix with `agent_harness gen-schema`.",
+        "Exit 1 on drift; fix with `agent-harness gen-schema`.",
     )
     sp.add_argument(
         "--schema",
@@ -510,7 +510,7 @@ def _cmd_verify_schema(args: argparse.Namespace) -> int:
         return EXIT_SUCCESS
     result.add_error(
         f"{schema_path} is out of sync with src/agent_harness/config.py. "
-        f"Run `agent_harness gen-schema` to regenerate."
+        f"Run `agent-harness gen-schema` to regenerate."
     )
     result.status = STATUS_FAILED
     _emit(result, args.json_output)
@@ -553,13 +553,13 @@ def _cmd_init(args: argparse.Namespace) -> int:
     actions: list[str] = []
 
     # 1. Copy executable entry point and schema.
-    src_exe = home / "agent_harness"
+    src_exe = home / "agent-harness"
     src_schema = home / "harness.schema.json"
     if not src_exe.exists():
         result.add_error(f"harness source missing: {src_exe}")
         result.status = STATUS_FAILED
         return _emit(result, args.json_output)
-    dst_exe = cwd / "agent_harness"
+    dst_exe = cwd / "agent-harness"
     dst_schema = cwd / "harness.schema.json"
     dst_exe.write_bytes(src_exe.read_bytes())
     dst_exe.chmod(0o755)
@@ -674,18 +674,18 @@ def _cmd_init(args: argparse.Namespace) -> int:
     result.summary["actions"] = actions
     install_hint = (
         "Project is self-contained (vendored src/agent_harness/); "
-        "./agent_harness works without HARNESS_HOME."
+        "./agent-harness works without HARNESS_HOME."
         if args.vendor
-        else "Install the harness CLI globally (see agent_harness README) or "
-        "set HARNESS_HOME; the ./agent_harness entry alone is not self-contained."
+        else "Install the harness CLI globally (see agent-harness README) or "
+        "set HARNESS_HOME; the ./agent-harness entry alone is not self-contained."
     )
     result.summary["next_steps"] = [
         "Edit harness.toml: name, dataset paths, [commands] for your tools.",
         "Replace evals/datasets/smoke.example.jsonl with your real samples.",
         install_hint,
-        "Run ./agent_harness doctor (or `harness doctor` if global) to verify toolchain.",
-        "Run ./agent_harness run check (or `harness run check`) to run project checks.",
-        "Run ./agent_harness eval smoke --offline for offline AI eval.",
+        "Run ./agent-harness doctor (or `agent-harness doctor` if global) to verify toolchain.",
+        "Run ./agent-harness run check (or `agent-harness run check`) to run project checks.",
+        "Run ./agent-harness eval smoke --offline for offline AI eval.",
     ]
     result.summary["project"] = {
         "name": name,
@@ -707,8 +707,8 @@ A baseline is a frozen eval report used as a regression reference. Promote
 a report deliberately:
 
 ```bash
-./agent_harness eval full --offline
-./agent_harness baseline compare evals/baselines/latest.json "$(ls -t evals/reports/full-*.json | head -1)"
+./agent-harness eval full --offline
+./agent-harness baseline compare evals/baselines/latest.json "$(ls -t evals/reports/full-*.json | head -1)"
 cp "$(ls -t evals/reports/full-*.json | head -1)" evals/baselines/latest.json
 git add evals/baselines/latest.json && git commit -m "baseline: bump"
 ```

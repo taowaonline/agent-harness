@@ -6,10 +6,10 @@ project that has adopted this harness.
 ## 1. Understand the task
 
 ```bash
-./agent_harness explain check
-./agent_harness explain eval-smoke
-./agent_harness list
-./agent_harness doctor
+./agent-harness explain check
+./agent-harness explain eval-smoke
+./agent-harness list
+./agent-harness doctor
 ```
 
 Read `AGENTS.md`. Confirm the acceptance criteria in your own words.
@@ -28,16 +28,16 @@ item as it lands.
 ## 4. Local checks
 
 ```bash
-./agent_harness validate
-./agent_harness run check           # format, lint, typecheck, test-unit
-./agent_harness eval smoke --offline
+./agent-harness validate
+./agent-harness run check           # format, lint, typecheck, test-unit
+./agent-harness eval smoke --offline
 ```
 
 If you changed AI behavior (prompt, model, tool, retrieval):
 
 ```bash
-./agent_harness eval full --offline
-./agent_harness baseline compare evals/baselines/latest.json evals/reports/<new>.json
+./agent-harness eval full --offline
+./agent-harness baseline compare evals/baselines/latest.json evals/reports/<new>.json
 ```
 
 ## 5. Open a PR
@@ -61,6 +61,6 @@ section does not apply, say "no change" rather than leaving it blank.
 
 - **Reporting `skipped` as `passed`.** The harness distinguishes them;
   your PR description should too.
-- **Using an unknown command.** Run `./agent_harness list` — names are stable.
+- **Using an unknown command.** Run `./agent-harness list` — names are stable.
 - **Forgetting to update eval samples** when changing AI behavior.
 - **Hard-coding a model name in code** instead of `prompts/manifest`.

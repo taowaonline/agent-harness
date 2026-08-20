@@ -1,6 +1,6 @@
 {
   "name": "@taowaonline/agent-harness",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Vendor-neutral control plane for AI-assisted development and AI application lifecycle — one harness, every coding agent (Claude Code, Codex, ZCode, Kimi, Deep Code, Cursor).",
   "license": "MIT",
   "repository": {
@@ -13,7 +13,7 @@
   "files": [
     "bin/setup.js",
     "SKILL.md",
-    "agent_harness",
+    "agent-harness",
     "harness.toml",
     "harness.schema.json",
     "pyproject.toml",

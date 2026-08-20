@@ -1,6 +1,6 @@
-# agent_harness — AI development harness
+# agent-harness — AI development harness
 
-This machine has the `agent_harness` CLI available (npm: @taowaonline/agent-harness).
+This machine has the `agent-harness` CLI available (npm: @taowaonline/agent-harness).
 When the project has a `harness.toml` (or the user asks to set one up), use the
 harness instead of inventing command chains.
 
@@ -8,21 +8,21 @@ harness instead of inventing command chains.
 
 | Command | Meaning |
 |---|---|
-| `agent_harness doctor` | Check harness, config, and toolchain availability |
-| `agent_harness validate` | Validate harness.toml + datasets + workflow refs |
-| `agent_harness list` | List stages, workflows, evals, security policy |
-| `agent_harness run <name>` | Run a stage or workflow (`--dry-run`, `--json`) |
-| `agent_harness eval smoke\|full --offline` | Offline deterministic eval |
-| `agent_harness baseline compare <a> <b>` | Diff two eval reports |
+| `agent-harness doctor` | Check harness, config, and toolchain availability |
+| `agent-harness validate` | Validate harness.toml + datasets + workflow refs |
+| `agent-harness list` | List stages, workflows, evals, security policy |
+| `agent-harness run <name>` | Run a stage or workflow (`--dry-run`, `--json`) |
+| `agent-harness eval smoke\|full --offline` | Offline deterministic eval |
+| `agent-harness baseline compare <a> <b>` | Diff two eval reports |
 
-If the project root has a `./agent_harness` entry script, prefer `./agent_harness`;
+If the project root has a `./agent-harness` entry script, prefer `./agent-harness`;
 otherwise use the globally installed `agent-harness-setup` package location or
 `python3 -m agent_harness.cli` from the package root.
 
 ## Discipline
 
-- Do not guess stage names or argv — run `agent_harness list` and
-  `agent_harness run <stage> --dry-run` first; workflows can nest.
+- Do not guess stage names or argv — run `agent-harness list` and
+  `agent-harness run <stage> --dry-run` first; workflows can nest.
 - Exit codes: 0 success, 1 validation failure, 2 stage failure,
   3 policy gate, 4 internal error, 10 skipped (opt into 0 via `--allow-skipped`).
 - `skipped` is never `passed` — always surface the skip reason.

@@ -1,9 +1,9 @@
 id: discover-with-list
-title: Discover commands via ./agent_harness list, not by guessing
+title: Discover commands via ./agent-harness list, not by guessing
 description: |
   SKILL.md "Do not" rule: do not guess command names. Stage names are
   stable but argv are profile-supplied. The Agent should use
-  `./agent_harness list` to discover what's actually configured, not invent
+  `./agent-harness list` to discover what's actually configured, not invent
   commands or assume defaults.
 
 input:
@@ -15,10 +15,10 @@ input:
 
 expect:
   must_contain:
-    - "./agent_harness list"
+    - "./agent-harness list"
 
 judge:
   type: rule_based
   success:
     - output_contains:
-        all: ["./agent_harness list"]
+        all: ["./agent-harness list"]

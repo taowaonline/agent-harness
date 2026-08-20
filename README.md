@@ -52,12 +52,12 @@ mental model.
 ## Quick start
 
 ```bash
-./agent_harness doctor
-./agent_harness validate
-./agent_harness list
-./agent_harness run check --dry-run
-./agent_harness run check
-./agent_harness eval smoke --offline
+./agent-harness doctor
+./agent-harness validate
+./agent-harness list
+./agent-harness run check --dry-run
+./agent-harness run check
+./agent-harness eval smoke --offline
 ```
 
 The control plane is implemented in Python 3.11+ standard library only — no
@@ -78,11 +78,11 @@ agent-harness-setup --list     # show all targets
 
 | Target | Flag | Installs |
 |---|---|---|
-| Claude Code | `--claude` | `~/.claude/skills/agent_harness` |
-| Z.ai ZCode | `--zcode` | `~/.zcode/skills/agent_harness` |
-| Kimi Code CLI | `--kimi` | `~/.kimi-code/skills/agent_harness` |
-| Cross-tool shared | `--agents-shared` | `~/.agents/skills/agent_harness` |
-| Deep Code | `--deepcode` | `~/.deepcode/skills/agent_harness` (best-effort) |
+| Claude Code | `--claude` | `~/.claude/skills/agent-harness` |
+| Z.ai ZCode | `--zcode` | `~/.zcode/skills/agent-harness` |
+| Kimi Code CLI | `--kimi` | `~/.kimi-code/skills/agent-harness` |
+| Cross-tool shared | `--agents-shared` | `~/.agents/skills/agent-harness` |
+| Deep Code | `--deepcode` | `~/.deepcode/skills/agent-harness` (best-effort) |
 | Codex | `--codex` | managed block in `~/.codex/AGENTS.md` |
 | Cursor | `--cursor --project <dir>` | `.cursor/rules/agent-harness.mdc` |
 
@@ -93,7 +93,7 @@ applies live with no re-run needed. Python CLI requires Python 3.11+
 
 ## What's inside
 
-- `agent_harness` — executable entry point (no need to remember a Python module path)
+- `agent-harness` — executable entry point (no need to remember a Python module path)
 - `harness.toml` — this repository's own config
 - `harness.schema.json` — machine-readable config contract
 - `src/agent_harness/` — control plane implementation

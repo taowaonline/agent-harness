@@ -17,7 +17,7 @@ working in this repository. Read it before making changes.
 - Only modify files within the task scope. Preserve user changes that are
   out of scope.
 - Prefer small, reviewable diffs. Do not refactor unrelated code.
-- Do not invent commands. Discover them through `./agent_harness list` or the docs.
+- Do not invent commands. Discover them through `./agent-harness list` or the docs.
 - Use argv arrays for any subprocess invocation. Never `shell=True`.
 - Do not read, print, or commit secrets. If you accidentally see one, redact
   it and notify the user.
@@ -56,16 +56,16 @@ working in this repository. Read it before making changes.
 Run the harness checks that match the change's risk:
 
 ```bash
-./agent_harness validate
-./agent_harness run check           # format, lint, typecheck, unit tests
-./agent_harness eval smoke --offline
+./agent-harness validate
+./agent-harness run check           # format, lint, typecheck, unit tests
+./agent-harness eval smoke --offline
 ```
 
 For changes affecting prompts, models, tools, or eval behavior, also run:
 
 ```bash
-./agent_harness eval full --offline
-./agent_harness baseline compare <old-report> <new-report>
+./agent-harness eval full --offline
+./agent-harness baseline compare <old-report> <new-report>
 ```
 
 For a new regression test, prove the guard: introduce the regression,

@@ -99,7 +99,7 @@ A baseline is a checked-in report under `evals/baselines/`. Compare two
 reports with:
 
 ```bash
-./agent_harness baseline compare evals/baselines/old.json evals/reports/new.json
+./agent-harness baseline compare evals/baselines/old.json evals/reports/new.json
 ```
 
 A regression (negative pass-rate delta) is surfaced as a non-zero exit code.

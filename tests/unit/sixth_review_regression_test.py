@@ -406,14 +406,14 @@ class InitVendorTests(unittest.TestCase):
         env = {k: v for k, v in os.environ.items() if k != "HARNESS_HOME"}
         env["PATH"] = os.environ.get("PATH", "")
         proc = subprocess.run(
-            [str(self.dir / "agent_harness"), "--version"],
+            [str(self.dir / "agent-harness"), "--version"],
             capture_output=True,
             text=True,
             env=env,
             timeout=10,
         )
         self.assertEqual(proc.returncode, 0, proc.stderr)
-        self.assertIn("agent_harness", proc.stdout)
+        self.assertIn("agent-harness", proc.stdout)
 
     def test_init_default_does_not_vendor(self) -> None:
         # Without --vendor, src/agent_harness/ must NOT be copied.

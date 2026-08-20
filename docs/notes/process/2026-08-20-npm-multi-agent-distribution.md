@@ -6,7 +6,7 @@ directory. A zero-dependency Node installer (`bin/setup.js`,
 `npx @taowaonline/agent-harness setup`) wires the same SKILL.md into every
 coding agent CLI, instead of maintaining per-CLI forks of the skill content:
 
-- SKILL.md targets (symlink `skills/agent_harness` → package root):
+- SKILL.md targets (symlink `skills/agent-harness` → package root):
   Claude Code `~/.claude/skills/`, Z.ai ZCode `~/.zcode/skills/`,
   Kimi Code `~/.kimi-code/skills/`, shared standard `~/.agents/skills/`,
   Deep Code `~/.deepcode/skills/` (best-effort path).

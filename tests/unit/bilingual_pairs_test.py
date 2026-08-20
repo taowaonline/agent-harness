@@ -45,7 +45,7 @@ def _headings(text: str) -> list[int]:
 
 
 def _has_commands(text: str) -> bool:
-    return "```" in text or "`agent_harness" in text or "./agent_harness" in text
+    return "```" in text or "`agent-harness" in text or "./agent-harness" in text
 
 
 class BilingualPairTests(unittest.TestCase):

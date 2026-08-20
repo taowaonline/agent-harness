@@ -3,11 +3,11 @@
  * agent-harness setup — wire the harness skill into coding agent CLIs.
  *
  * Targets (each is independent; run with no flags to install everything):
- *   --claude        ~/.claude/skills/agent_harness      (Claude Code)
- *   --zcode         ~/.zcode/skills/agent_harness       (Z.ai ZCode)
- *   --kimi          ~/.kimi-code/skills/agent_harness   (Kimi Code CLI)
- *   --agents-shared ~/.agents/skills/agent_harness      (cross-tool shared dir)
- *   --deepcode      ~/.deepcode/skills/agent_harness    (Deep Code, best-effort)
+ *   --claude        ~/.claude/skills/agent-harness      (Claude Code)
+ *   --zcode         ~/.zcode/skills/agent-harness       (Z.ai ZCode)
+ *   --kimi          ~/.kimi-code/skills/agent-harness   (Kimi Code CLI)
+ *   --agents-shared ~/.agents/skills/agent-harness      (cross-tool shared dir)
+ *   --deepcode      ~/.deepcode/skills/agent-harness    (Deep Code, best-effort)
  *   --codex         managed block in ~/.codex/AGENTS.md (+ project AGENTS.md with --project)
  *   --cursor        <project>/.cursor/rules/agent-harness.mdc (--project, defaults to cwd)
  *
@@ -25,7 +25,7 @@ const os = require("os");
 const path = require("path");
 
 const PKG_ROOT = path.resolve(__dirname, "..");
-const SKILL_NAME = "agent_harness";
+const SKILL_NAME = "agent-harness";
 const START_MARK = "<!-- agent-harness:start -->";
 const END_MARK = "<!-- agent-harness:end -->";
 

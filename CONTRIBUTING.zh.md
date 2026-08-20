@@ -24,7 +24,7 @@
 
 1. 认领或新建 Issue，并在 PR 描述中链接。
 2. 从 `main` 拉分支，保持 diff 小而可审查。
-3. 本地运行 `./agent_harness validate` 和 `./agent_harness run check`。
+3. 本地运行 `./agent-harness validate` 和 `./agent-harness run check`。
 4. 使用 `.github/pull_request_template.md` 开 PR。
 5. 在评审意见处逐条回复。除非被要求，不要 force-push 评审者正在读的历史。
 6. 合并前必需的 CI 检查必须全绿（或显式豁免）。

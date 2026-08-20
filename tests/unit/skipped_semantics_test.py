@@ -126,7 +126,7 @@ class EntryDistributionTests(unittest.TestCase):
     def test_entry_no_hardcoded_canonical_path(self) -> None:
         # The harness script must not contain machine-specific paths.
         repo_root = HERE.parent.parent
-        entry = (repo_root / "agent_harness").read_text(encoding="utf-8")
+        entry = (repo_root / "agent-harness").read_text(encoding="utf-8")
         self.assertNotIn("/Users/tommacmini4", entry)
         self.assertNotIn("_CANONICAL_HOME", entry)
 
@@ -140,22 +140,22 @@ class EntryDistributionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             d = Path(d)
             # Copy harness script
-            shutil.copy2(repo_root / "agent_harness", d / "agent_harness")
-            (d / "agent_harness").chmod(0o755)
+            shutil.copy2(repo_root / "agent-harness", d / "agent-harness")
+            (d / "agent-harness").chmod(0o755)
             # Copy src/ so the script finds agent_harness adjacent
             shutil.copytree(repo_root / "src", d / "src")
             # Run with cleared HARNESS_HOME
             env = {k: v for k, v in os.environ.items() if k != "HARNESS_HOME"}
             env["PATH"] = os.environ.get("PATH", "")
             proc = subprocess.run(
-                [str(d / "agent_harness"), "--version"],
+                [str(d / "agent-harness"), "--version"],
                 capture_output=True,
                 text=True,
                 env=env,
                 timeout=10,
             )
             self.assertEqual(proc.returncode, 0, proc.stderr)
-            self.assertIn("agent_harness", proc.stdout)
+            self.assertIn("agent-harness", proc.stdout)
 
 
 if __name__ == "__main__":  # pragma: no cover

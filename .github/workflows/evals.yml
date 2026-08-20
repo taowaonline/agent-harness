@@ -39,10 +39,10 @@ jobs:
           python-version: "3.11"
 
       - name: Validate harness config
-        run: ./agent_harness validate --strict
+        run: ./agent-harness validate --strict
 
       - name: Offline full eval (always)
-        run: ./agent_harness eval full --offline
+        run: ./agent-harness eval full --offline
 
       - name: Online full eval (only if secret present)
         if: ${{ github.event.inputs.online == 'true' && secrets.EVALS_ENABLED == 'true' }}
@@ -53,13 +53,13 @@ jobs:
         run: |
           echo "Online eval provider is a project integration point."
           echo "Configure ModelProvider in your project to consume EVAL_API_KEY."
-          # Replace with: ./agent_harness eval full --json > evals/reports/online-$(date +%s).json
+          # Replace with: ./agent-harness eval full --json > evals/reports/online-$(date +%s).json
 
       - name: Compare to baseline (if present)
         run: |
           if [ -f evals/baselines/latest.json ]; then
             latest=$(ls -t evals/reports/full-*.json | head -1)
-            ./agent_harness baseline compare evals/baselines/latest.json "$latest"
+            ./agent-harness baseline compare evals/baselines/latest.json "$latest"
           else
             echo "No baseline at evals/baselines/latest.json — skipping comparison."
           fi

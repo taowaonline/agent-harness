@@ -70,7 +70,7 @@ def run_target(cfg: Config, request: RunRequest, result: RunResult) -> RunResult
     elif name in BUILTIN_STAGES:
         stage = _run_builtin(cfg, name, request, result)
     else:
-        result.add_error(f"Unknown target '{name}'. Use `./agent_harness list` to see options.")
+        result.add_error(f"Unknown target '{name}'. Use `./agent-harness list` to see options.")
         result.status = STATUS_FAILED
         return result
     result.stages.append(stage)

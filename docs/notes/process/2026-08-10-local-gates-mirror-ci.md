@@ -12,7 +12,7 @@ machine" and "CI is red" name the same command. Our earlier drift — CI
 invoked `validate --strict` while local muscle memory said `validate` —
 produced a gate that looked stricter than it was (SIXTH_REVIEW P1-1
 lineage). Same-name gates make that class of drift visible in review,
-because a workflow yml that runs anything not in `agent_harness list`
+because a workflow yml that runs anything not in `agent-harness list`
 is immediately suspect.
 
 **How to apply:** New CI lanes are added by first adding the named

@@ -27,7 +27,7 @@ cat > "$HOOK" <<'EOF'
 if [ "${AGENT_HARNESS_NO_HOOKS:-}" = "1" ]; then
     exit 0
 fi
-exec ./agent_harness run check
+exec ./agent-harness run check
 EOF
 
 chmod +x "$HOOK"
