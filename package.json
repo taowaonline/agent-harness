@@ -29,7 +29,10 @@
     "evals/cases/",
     "evals/graders/",
     "evals/baselines/latest.json",
-    "evals/baselines/README.md"
+    "evals/baselines/README.md",
+    "!**/__pycache__/",
+    "!**/*.py[cod]",
+    "!src/agent_harness.egg-info/"
   ],
   "keywords": [
     "claude-code",
